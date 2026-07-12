@@ -52,7 +52,7 @@ KnowledgeOS/
 └── knowledge/   # 실제 사용자와 AI가 공동 작업할 로컬 Markdown 문서 저장소 (Core Vault)
 ```
 
-현재 구현된 backend 기능은 application bootstrap, `/api/health`, canonical path 검증, 단일 활성 Vault containment입니다. 파일 읽기·쓰기 API, 검색, Git 백업, 인증은 설계가 확정된 순서대로 구현합니다.
+현재 구현된 backend 기능은 application bootstrap, `/api/health`, canonical path 검증, 단일 활성 Vault containment, UTF-8 Markdown 읽기 API입니다. 파일 쓰기 API, 검색, Git 백업, 인증은 설계가 확정된 순서대로 구현합니다.
 
 ---
 
@@ -78,7 +78,7 @@ KnowledgeOS/
 ### 3. `backend/src/config.rs` (설정 가동 및 검증)
 * **역할**: 환경 변수를 파싱하고 올바른 형식인지 검증합니다.
 * **핵심 기능**:
-  - `KNOWLEDGEOS_BIND_ADDRESS`, `KNOWLEDGEOS_KNOWLEDGE_ROOT`, `KNOWLEDGEOS_LOG` 환경 변수를 시스템으로부터 탐색합니다.
+  - `KNOWLEDGEOS_BIND_ADDRESS`, `KNOWLEDGEOS_KNOWLEDGE_ROOT`, `KNOWLEDGEOS_LOG`, `KNOWLEDGEOS_MAX_MARKDOWN_BYTES` 환경 변수를 시스템으로부터 탐색합니다.
   - 값이 지정되지 않은 경우 적절한 기본값(예: 로컬 3000포트, `../knowledge` 디렉터리)으로 즉시 채워줍니다.
   - 주소 정보 문자열을 실제 주소 객체(`SocketAddr`)로 파싱하는데, 이 형식이 잘못되었다면 첫 클라이언트가 접속을 시도할 때가 아니라 **서버가 켜지는 즉시 에러를 내며 멈추도록(Fail-Fast)** 설계되었습니다.
 
@@ -107,6 +107,16 @@ KnowledgeOS/
   - 가짜 설정(`AppConfig::for_test()`)을 이용해 메모리에 라우터를 띄우고 가짜 요청을 주입합니다.
   - 서버 상태 코드가 정확히 `200 OK`인지, 결과 JSON 데이터 안에 담긴 키-값들이 기획된 약속대로 반환되었는지 검사합니다.
   - 실제 네트워크 자원을 전혀 소모하지 않으므로 컴퓨터 사양과 무관하게 1초 미만의 속도로 안전하게 테스트가 끝납니다.
+
+### 8. `backend/src/infrastructure/markdown.rs` (안정적인 Markdown Reader)
+* Vault containment를 통과한 regular file만 최대 5 MiB까지 읽습니다.
+* 읽기 전후 metadata를 비교하고 변경 시 한 번 재시도합니다.
+* UTF-8 원문, SHA-256 hash, byte size와 수정 시각을 생성합니다.
+
+### 9. `backend/src/api/files.rs`, `backend/src/api/error.rs` (파일 API)
+* `GET /api/files/{*path}` wildcard route로 중첩 Markdown 경로를 읽습니다.
+* blocking filesystem 작업은 Tokio blocking pool에서 실행합니다.
+* 오류를 안정적인 HTTP status와 JSON error code로 변환하며 절대 filesystem 경로를 응답에 노출하지 않습니다.
 
 ---
 

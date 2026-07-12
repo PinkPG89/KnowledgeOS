@@ -15,6 +15,7 @@
 - [x] Rust/Axum backend skeleton과 health contract test
 - [x] Canonical path policy와 Rust value object
 - [x] 단일 활성 Vault와 symlink containment policy
+- [x] UTF-8 Markdown read API와 SHA-256 snapshot
 - [x] KnowledgeOS 핵심 아키텍처 확정
 - [x] 디렉터리 구조 확정
 - API 초안과 구현 상태 동기화

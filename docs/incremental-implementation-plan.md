@@ -67,9 +67,17 @@
 
 ### A04 Read file
 
+- 상태: 완료 (2026-07-12)
 - 범위: UTF-8 Markdown read, hash, size, modified time
 - 참고: Flatnotes의 read contract
 - 완료 기준: 정상, 없음, invalid UTF-8, oversized file test 통과
+
+구현 결과:
+
+- `GET /api/files/{*path}`와 공통 JSON 오류 계약을 추가했다.
+- 최대 5 MiB UTF-8 원문, SHA-256 hash, byte size, UTC RFC3339 millisecond를 반환한다.
+- blocking filesystem read는 Tokio blocking pool에서 실행한다.
+- 읽기 중 metadata 변경을 감지하면 한 번 재시도하고 반복 변경 시 conflict를 반환한다.
 
 ### A05 Create file
 
@@ -206,8 +214,8 @@
 1. A01 Backend project skeleton — 완료
 2. A02 Canonical path policy — 완료
 3. A03 Root containment and symlink policy — 완료
-4. A04 Read file — 다음 단계
-5. A05 Create file
+4. A04 Read file — 완료
+5. A05 Create file — 다음 단계
 6. A06 Atomic update with conflict detection
 7. A10 Lazy tree endpoint
 8. B01 PWA project skeleton

@@ -167,6 +167,8 @@ Invalidate/rebuild index
 Optional git commit
 ```
 
+파일 읽기와 같은 blocking filesystem operation은 Tokio blocking pool에서 실행해 async HTTP worker를 점유하지 않습니다.
+
 ### AI가 수정
 
 ```text

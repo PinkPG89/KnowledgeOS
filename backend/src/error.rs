@@ -1,4 +1,4 @@
-use std::{io, net::AddrParseError};
+use std::{io, net::AddrParseError, num::ParseIntError};
 
 use thiserror::Error;
 
@@ -18,6 +18,14 @@ pub enum AppError {
     /// 바인딩할 IP 및 포트(SocketAddress) 문자열의 문법이 올바르지 않을 때 발생하는 에러입니다.
     #[error("invalid socket address: {0}")]
     InvalidSocketAddress(#[from] AddrParseError),
+
+    /// Markdown 최대 크기 환경 변수가 양의 정수가 아닐 때 발생합니다.
+    #[error("invalid Markdown size limit: {0}")]
+    InvalidMaxMarkdownBytes(#[from] ParseIntError),
+
+    /// Markdown 최대 크기가 0으로 설정됐을 때 발생합니다.
+    #[error("Markdown size limit must be greater than zero")]
+    ZeroMaxMarkdownBytes,
 
     /// 파일 읽기/쓰기, 네트워크 연결 등의 입출력(I/O) 과정에서 문제가 발생했을 때의 에러입니다.
     #[error("I/O operation failed: {0}")]

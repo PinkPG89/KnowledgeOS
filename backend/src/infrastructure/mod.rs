@@ -9,5 +9,7 @@
 //! * **외부 서비스 추상화**: 파일 시스템 제어, 데이터베이스 연결, 원격 API 통신 등 시스템 외부 자원에 대한
 //!   구체적인 접근 로직을 한데 모아 관리합니다.
 
+// UTF-8 Markdown snapshot read를 수행하는 `markdown` 모듈을 공개합니다.
+pub mod markdown;
 // 마크다운 저장소(Vault)의 물리적 루트 검증 및 실질적인 디바이스 접근 제어를 수행하는 `vault` 모듈을 공개합니다.
 pub mod vault;

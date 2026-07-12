@@ -20,7 +20,7 @@ pub mod state;
 use axum::Router;
 
 // 크레이트 루트(crate root)로부터 필요한 하위 모듈과 설정 구조체를 가져옵니다.
-use crate::{api::health, config::AppConfig, infrastructure::vault::VaultError, state::AppState};
+use crate::{config::AppConfig, infrastructure::vault::VaultError, state::AppState};
 
 /// 웹 서버에서 사용할 모든 HTTP 경로(Route)와 전역 공유 상태(State)를 조립하여 반환합니다.
 ///
@@ -37,7 +37,7 @@ pub fn build_router(config: AppConfig) -> Result<Router, VaultError> {
     let state = AppState::initialize(config)?;
     Ok(Router::new()
         // `/api` 하위 경로로 들어오는 요청을 `health::router()`가 정의한 라우터 모듈로 전달(nesting)합니다.
-        .nest("/api", health::router())
+        .nest("/api", api::router())
         // 모든 handler가 검증된 Vault와 설정을 공유하도록 `AppState`를 주입합니다.
         .with_state(state))
 }

@@ -1,7 +1,7 @@
 # API Draft
 
 - 상태: Draft
-- 구현 상태: `/api/health`만 Implemented, 나머지는 Planned
+- 구현 상태: `/api/health`, `GET /api/files/{*path}` Implemented, 나머지는 Planned
 - 최종 갱신: 2026-07-12
 
 ## 원칙
@@ -33,6 +33,16 @@ API는 UI를 위한 얇은 파일 시스템 래퍼입니다. 원본 상태는 AP
   }
 }
 ```
+
+파일 읽기 오류 code:
+
+- `invalid_path`: 400
+- `path_not_allowed`: 403
+- `file_not_found`: 404
+- `read_conflict`: 409
+- `file_too_large`: 413
+- `not_a_markdown_file`, `not_a_regular_file`, `invalid_utf8`: 422
+- `internal_error`: 500
 
 ### Health
 
@@ -93,7 +103,7 @@ GET /api/tree
 
 ### Read File
 
-상태: Planned
+상태: Implemented
 
 ```http
 GET /api/files/{*path}
@@ -106,9 +116,17 @@ GET /api/files/{*path}
   "path": "projects/agent.md",
   "content": "# Agent\n",
   "hash": "sha256:...",
-  "modified_at": "2026-07-11T12:00:00Z"
+  "size": 8,
+  "modified_at": "2026-07-11T12:00:00.000Z"
 }
 ```
+
+- `content`는 parsing하지 않은 UTF-8 Markdown 원문입니다.
+- `hash`는 원문 byte의 lowercase SHA-256입니다.
+- `size`는 UTF-8 byte 수입니다.
+- `modified_at`은 UTC RFC3339 millisecond 형식입니다.
+- 기본 최대 크기는 5 MiB이며 `KNOWLEDGEOS_MAX_MARKDOWN_BYTES`로 변경할 수 있습니다.
+- 읽기 전후 metadata가 다르면 한 번 재시도하고 반복 변경 시 `409 read_conflict`를 반환합니다.
 
 ### Write File
 
