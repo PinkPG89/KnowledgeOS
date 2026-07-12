@@ -18,22 +18,27 @@ async fn main() -> Result<(), AppError> {
     // 2. 디버깅 및 분석용 로깅(Tracing) 시스템을 초기화합니다.
     init_tracing(&config.log_filter)?;
 
-    // 3. 지정된 IP 주소와 포트(예: 127.0.0.1:3000)로 TCP 리스너를 결합(Bind)하여 대기합니다.
-    // `.await`는 비동기 작업이 끝날 때까지 대기함을 의미합니다.
-    let listener = TcpListener::bind(config.bind_address).await?;
+    // `SocketAddr`는 Copy 타입이므로 설정 전체의 소유권을 옮기기 전에 값만 복사합니다.
+    let bind_address = config.bind_address;
 
-    // 4. 실제로 바인딩된 로컬 네트워크 주소 정보(IP 및 포트)를 가져옵니다.
+    // 3. socket을 열기 전에 단일 활성 Vault를 검증합니다.
+    let application = build_router(config)?;
+
+    // 4. 지정된 IP 주소와 포트(예: 127.0.0.1:3000)로 TCP 리스너를 결합(Bind)하여 대기합니다.
+    // `.await`는 비동기 작업이 끝날 때까지 대기함을 의미합니다.
+    let listener = TcpListener::bind(bind_address).await?;
+
+    // 5. 실제로 바인딩된 로컬 네트워크 주소 정보(IP 및 포트)를 가져옵니다.
     let local_address = listener.local_addr()?;
 
-    // 5. 서버가 정상적으로 시작되었음을 로그(INFO 레벨)로 남깁니다.
+    // 6. 서버가 정상적으로 시작되었음을 로그(INFO 레벨)로 남깁니다.
     // `%local_address`는 변수의 포맷팅 표현 방식입니다.
     info!(address = %local_address, "KnowledgeOS backend started");
 
-    // 6. Axum 웹 프레임워크를 사용해 HTTP 서버를 구동(Serve)합니다.
-    // `build_router(config)`를 통해 라우터 구조를 주입합니다.
+    // 7. Axum 웹 프레임워크를 사용해 HTTP 서버를 구동(Serve)합니다.
     // `.with_graceful_shutdown(...)`은 종료 신호가 들어왔을 때
     // 처리 중이던 연결을 안전하게 마친 후 종료(우아한 종료)할 수 있게 해줍니다.
-    axum::serve(listener, build_router(config))
+    axum::serve(listener, application)
         .with_graceful_shutdown(shutdown_signal())
         .await?;
 

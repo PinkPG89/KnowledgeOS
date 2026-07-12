@@ -38,6 +38,8 @@ API는 UI를 위한 얇은 파일 시스템 래퍼입니다. 원본 상태는 AP
 
 상태: Implemented
 
+backend는 이 endpoint를 제공하기 전에 설정된 단일 활성 Vault의 존재, directory 여부, 접근 가능성을 검증합니다.
+
 ```http
 GET /api/health
 ```

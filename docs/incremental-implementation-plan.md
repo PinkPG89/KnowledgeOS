@@ -52,9 +52,18 @@
 
 ### A03 Root containment and symlink policy
 
+- 상태: 완료 (2026-07-12)
 - 범위: resolved path가 `knowledge/` 내부인지 확인하고 symlink를 거부
+- 계약: [Vault Policy](vault-policy.md)
 - 완료 기준: root 밖 symlink와 nested symlink test 통과
 - 비범위: file content validation
+
+구현 결과:
+
+- 설정 경로와 canonical root를 보관하는 `VaultRoot`를 추가했다.
+- root symlink는 startup에서 한 번 해석하고 descendant symlink는 모두 거부한다.
+- 존재 대상과 create parent 검증 인터페이스를 분리했다.
+- network bind 전에 단일 활성 Vault를 검증하는 fail-fast startup을 적용했다.
 
 ### A04 Read file
 
@@ -196,8 +205,8 @@
 
 1. A01 Backend project skeleton — 완료
 2. A02 Canonical path policy — 완료
-3. A03 Root containment and symlink policy — 다음 단계
-4. A04 Read file
+3. A03 Root containment and symlink policy — 완료
+4. A04 Read file — 다음 단계
 5. A05 Create file
 6. A06 Atomic update with conflict detection
 7. A10 Lazy tree endpoint

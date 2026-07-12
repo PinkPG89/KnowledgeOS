@@ -14,6 +14,7 @@
 - Rust/Axum 파일 API PoC 진행 중
 - [x] Rust/Axum backend skeleton과 health contract test
 - [x] Canonical path policy와 Rust value object
+- [x] 단일 활성 Vault와 symlink containment policy
 - [x] KnowledgeOS 핵심 아키텍처 확정
 - [x] 디렉터리 구조 확정
 - API 초안과 구현 상태 동기화

@@ -52,7 +52,7 @@ KnowledgeOS/
 └── knowledge/   # 실제 사용자와 AI가 공동 작업할 로컬 Markdown 문서 저장소 (Core Vault)
 ```
 
-현재 구현된 backend 기능은 application bootstrap과 `/api/health`입니다. 파일 API, 검색, Git 백업, 인증은 설계가 확정된 순서대로 구현합니다.
+현재 구현된 backend 기능은 application bootstrap, `/api/health`, canonical path 검증, 단일 활성 Vault containment입니다. 파일 읽기·쓰기 API, 검색, Git 백업, 인증은 설계가 확정된 순서대로 구현합니다.
 
 ---
 
@@ -188,3 +188,4 @@ cargo run
 - [Reference Implementation Analysis.md](docs/reference-implementation-analysis.md): 유사 경쟁 오픈소스들의 벤치마킹 장단점 분석서.
 - [Incremental Implementation Plan.md](docs/incremental-implementation-plan.md): 점진적으로 모듈을 빌드하고 유닛 테스트로 검증하기 위한 꼼꼼한 마일스톤 계획서.
 - [Path Policy.md](docs/path-policy.md): API와 domain layer가 공유하는 안전한 상대 경로 규칙.
+- [Vault Policy.md](docs/vault-policy.md): 단일 활성 Vault 선택과 symlink·containment 보안 경계.

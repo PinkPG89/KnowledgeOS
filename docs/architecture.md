@@ -149,6 +149,8 @@ Frontend 결정 상태:
 
 `knowledge/`와 `.knowledgeos/`는 의존 방향이 반대입니다. `.knowledgeos/`는 `knowledge/`에서 재생성할 수 있지만, `knowledge/`는 `.knowledgeos/`에 의존하면 안 됩니다.
 
+MVP는 process 하나당 하나의 활성 Vault를 사용합니다. `KNOWLEDGEOS_KNOWLEDGE_ROOT` 변경 후 재시작해 다른 Vault를 선택합니다. 상세 경계는 [Vault Policy](vault-policy.md)를 따릅니다.
+
 ## 데이터 흐름
 
 ### 사람이 수정

@@ -2,6 +2,8 @@ use std::{io, net::AddrParseError};
 
 use thiserror::Error;
 
+use crate::infrastructure::vault::VaultError;
+
 /// 프로세스 시작 및 서버 실행 중에 발생할 수 있는 애플리케이션 최상위 오류들을 모아놓은 열거형(Enum)입니다.
 ///
 /// ## Rust의 에러 핸들링과 `thiserror` 라이브러리
@@ -28,4 +30,8 @@ pub enum AppError {
     /// 로그 프레임워크(`tracing`)를 초기화(가동)하는 과정 자체에서 실패했을 때의 에러입니다.
     #[error("failed to initialize logging: {0}")]
     LoggingInitialization(String),
+
+    /// 설정된 단일 활성 Vault를 초기화할 수 없을 때 발생합니다.
+    #[error(transparent)]
+    Vault(#[from] VaultError),
 }

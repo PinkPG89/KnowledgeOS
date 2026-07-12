@@ -4,6 +4,7 @@ use axum::{
 };
 use http_body_util::BodyExt;
 use serde_json::{Value, json};
+use tempfile::TempDir;
 use tower::ServiceExt;
 
 use knowledgeos_backend::{build_router, config::AppConfig};
@@ -20,9 +21,13 @@ use knowledgeos_backend::{build_router, config::AppConfig};
 /// 테스트 전용 비동기 런타임 위에서 실행되도록 표시해 줍니다.
 #[tokio::test]
 async fn health_endpoint_matches_public_contract() {
+    let vault = TempDir::new().expect("temporary Vault should be created");
+    let configured_path = vault.path().display().to_string();
+
     // 1. 테스트 전용 설정(Mock Config)을 활용해 라우터를 빌드합니다.
     // 2. `oneshot` 메서드는 라우터를 단발성(oneshot) 서비스로 구성하여 단 하나의 요청만 처리하고 즉시 연결을 종료합니다.
-    let response = build_router(AppConfig::for_test())
+    let response = build_router(AppConfig::for_test(vault.path()))
+        .expect("test Vault should initialize")
         .oneshot(
             // 가상의 HTTP GET /api/health 요청을 설계합니다.
             Request::builder()
@@ -54,7 +59,7 @@ async fn health_endpoint_matches_public_contract() {
         json!({
             "status": "ok",
             "version": "0.1.0",
-            "knowledge_root": "knowledge"
+            "knowledge_root": configured_path
         })
     );
 }

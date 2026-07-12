@@ -1,12 +1,12 @@
-use std::{env, net::SocketAddr};
+use std::{env, net::SocketAddr, path::PathBuf};
 
 use crate::error::AppError;
 
 /// 애플리케이션 시작 시 최초에 한 번 로드하고 검증을 거친 전역 설정 정보 구조체입니다.
 ///
 /// ## 설정값 형식 변환(Type Validation)의 중요성
-/// 환경 변수(String)를 매 HTTP 요청마다 매번 읽지 않고, 앱 시작 단계에서 타입 검증을 거쳐
-/// 구조체(`SocketAddr` 등 실제 필요한 타입) 형태로 메모리에 보관(Typed Value)합니다.
+/// 환경 변수 문자열을 매 HTTP 요청마다 읽지 않고, 앱 시작 단계에서 타입 검증을 거쳐
+/// `SocketAddr`, `PathBuf` 등 실제 필요한 타입으로 메모리에 보관합니다.
 /// 이를 통해 잘못 구성된 인프라 및 환경 변수 설정을 실제 클라이언트 요청이 들어왔을 때가 아니라,
 /// 서버 프로세스가 뜨는 시점(Bootstrap Phase)에 즉시 감지하여 Fail-Fast하게 처리할 수 있습니다.
 ///
@@ -16,8 +16,8 @@ use crate::error::AppError;
 pub struct AppConfig {
     /// 서버가 요청을 받기 위해 바인딩할 네트워크 소켓 주소 (IP + Port)
     pub bind_address: SocketAddr,
-    /// 마크다운 문서들이 보관되는 로컬 파일 시스템 상의 루트 디렉터리 경로
-    pub knowledge_root: String,
+    /// 마크다운 문서들이 보관되는 단일 활성 Vault의 설정 경로
+    pub knowledge_root: PathBuf,
     /// 로깅 시스템(`tracing`)에서 적용할 로그 범위와 필터 옵션
     pub log_filter: String,
 }
@@ -47,9 +47,11 @@ impl AppConfig {
             .unwrap_or_else(|_| Self::DEFAULT_BIND_ADDRESS.to_owned())
             .parse()?;
 
-        // KNOWLEDGEOS_KNOWLEDGE_ROOT 환경 변수를 조회하며, 값이 없으면 기본 경로를 지정합니다.
-        let knowledge_root = env::var("KNOWLEDGEOS_KNOWLEDGE_ROOT")
-            .unwrap_or_else(|_| Self::DEFAULT_KNOWLEDGE_ROOT.to_owned());
+        // KNOWLEDGEOS_KNOWLEDGE_ROOT를 OS 경로 타입으로 변환하며, 없으면 기본 경로를 사용합니다.
+        let knowledge_root = PathBuf::from(
+            env::var("KNOWLEDGEOS_KNOWLEDGE_ROOT")
+                .unwrap_or_else(|_| Self::DEFAULT_KNOWLEDGE_ROOT.to_owned()),
+        );
 
         // 생성된 값을 가진 설정 구조체를 감싸서 반환(Ok)합니다.
         Ok(Self {
@@ -66,12 +68,12 @@ impl AppConfig {
     /// `#[must_use]`는 이 함수의 반환값을 변수에 대입하거나 사용하지 않고 무시할 때
     /// 컴파일러가 경고(Warning)를 내보내도록 하는 애트리뷰트입니다.
     #[must_use]
-    pub fn for_test() -> Self {
+    pub fn for_test(knowledge_root: impl Into<PathBuf>) -> Self {
         Self {
             // 테스트 시에는 항상 고정된 로컬 IP `127.0.0.1:3000` 주소를 주입합니다.
             bind_address: SocketAddr::from(([127, 0, 0, 1], 3000)),
             // 테스트용 지식 저장소 루트 폴더를 "knowledge"로 지정합니다.
-            knowledge_root: "knowledge".to_owned(),
+            knowledge_root: knowledge_root.into(),
             // 디버그 출력 로그 필터를 설정합니다.
             log_filter: Self::DEFAULT_LOG_FILTER.to_owned(),
         }
