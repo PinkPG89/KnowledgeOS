@@ -119,24 +119,24 @@ Backend API
 - Git 자동 백업
 - 인증
 
-후보 기술:
+선택 기술:
 
-- FastAPI
+- Rust 2024 edition
+- Axum과 Tokio
+- Serde와 tracing
 - SQLite FTS 또는 ripgrep
-- watchdog
+- notify crate
 - Git CLI
 
-### AI Layer
+### External AI Access
 
-초기에는 필수가 아닙니다.
+외부 AI는 기본적으로 `knowledge/` filesystem을 직접 공유합니다.
 
-- MCP server
-- embedding index
-- note summarizer
-- duplicate detector
-- link recommender
+- Codex, Claude Code, local agent는 direct filesystem client입니다.
+- backend 내부에 LLM provider나 AI framework를 포함하지 않습니다.
+- 원격 AI 접근이 필요해질 때만 별도 MCP 또는 REST adapter를 검토합니다.
 
-AI Layer는 원본 파일을 직접 읽고, 필요한 경우에만 보조 API를 제공합니다.
+선택 adapter는 원본이 아니며 삭제해도 Markdown workspace가 완전해야 합니다.
 
 ### Storage Layer
 

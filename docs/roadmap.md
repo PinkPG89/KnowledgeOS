@@ -2,10 +2,14 @@
 
 ## Phase 0: 조사와 기준 확정
 
-- Many Notes UI 구조 분석
-- Flatnotes filesystem 저장 방식 분석
+- [x] Many Notes UI 구조 분석
+- [x] Flatnotes filesystem 저장 방식 분석
+- [x] 참고 구현 commit과 license 기준 고정
+- [x] 채택·제외 항목 문서화
+- [x] 작은 구현 단위와 완료 기준 정의
 - CodeMirror 6 모바일 편집 UX 검증
-- FastAPI 파일 API PoC
+- Rust/Axum 파일 API PoC
+- [x] Rust/Axum backend skeleton과 health contract test
 - KnowledgeOS 아키텍처 문서 확정
 - 디렉터리 구조와 API 초안 확정
 - 프론트엔드 컴포넌트 경계 확정
@@ -16,6 +20,11 @@
 - Markdown 파일 원본 원칙 확정
 - MVP API 확정
 - 구현 전에 문서가 Source of Truth 역할을 수행
+
+상세 문서:
+
+- [Reference Implementation Analysis](reference-implementation-analysis.md)
+- [Incremental Implementation Plan](incremental-implementation-plan.md)
 
 ## Phase 1: MVP
 

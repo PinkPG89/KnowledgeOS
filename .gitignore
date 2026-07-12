@@ -1,0 +1,14 @@
+.venv/
+.cargo-home/
+.rustup-home/
+backend/target/
+__pycache__/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+*.py[cod]
+.coverage
+htmlcov/
+.knowledgeos/
+frontend/node_modules/
+frontend/dist/
