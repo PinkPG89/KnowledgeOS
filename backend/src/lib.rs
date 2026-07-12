@@ -12,6 +12,7 @@
 // 하위 모듈들을 외부로 공개(pub)하여 라이브러리 사용자 또는 main.rs가 접근할 수 있도록 선언합니다.
 pub mod api;
 pub mod config;
+pub mod domain;
 pub mod error;
 
 use axum::Router;

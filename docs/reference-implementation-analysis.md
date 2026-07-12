@@ -1,5 +1,8 @@
 # Reference Implementation Analysis
 
+- 상태: Accepted Snapshot
+- 최종 갱신: 2026-07-12
+
 ## 목적
 
 Many Notes와 Flatnotes를 포크하거나 통째로 병합하지 않는다. 각 프로젝트에서 검증된 동작과 설계 판단만 추출하고, KnowledgeOS의 filesystem-first 아키텍처와 기술 스택에 맞게 재구현한다.

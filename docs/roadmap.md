@@ -1,5 +1,8 @@
 # Roadmap
 
+- 상태: Active
+- 최종 갱신: 2026-07-12
+
 ## Phase 0: 조사와 기준 확정
 
 - [x] Many Notes UI 구조 분석
@@ -8,11 +11,13 @@
 - [x] 채택·제외 항목 문서화
 - [x] 작은 구현 단위와 완료 기준 정의
 - CodeMirror 6 모바일 편집 UX 검증
-- Rust/Axum 파일 API PoC
+- Rust/Axum 파일 API PoC 진행 중
 - [x] Rust/Axum backend skeleton과 health contract test
-- KnowledgeOS 아키텍처 문서 확정
-- 디렉터리 구조와 API 초안 확정
-- 프론트엔드 컴포넌트 경계 확정
+- [x] Canonical path policy와 Rust value object
+- [x] KnowledgeOS 핵심 아키텍처 확정
+- [x] 디렉터리 구조 확정
+- API 초안과 구현 상태 동기화
+- Frontend 기술과 컴포넌트 경계 ADR 확정
 
 완료 기준:
 
@@ -47,7 +52,7 @@
 - filesystem watcher
 - index rebuild
 - optimistic concurrency
-- `.trash/` 복구
+- `_trash/` 복구
 - 자동 Git backup
 - 인증/권한
 - Docker Compose
@@ -73,17 +78,16 @@
 - Obsidian의 핵심 지식관리 흐름 일부 대체 가능
 - DB를 지워도 모든 기능 재구성 가능
 
-## Phase 4: AI 기능
+## Phase 4: Optional Remote Access
 
-- MCP server
-- AI note summarizer
-- AI link recommender
-- AI tag recommender
-- embedding search
-- change review assistant
+- 원격 AI용 제한 접근 adapter
+- directory allowlist와 인증
+- 변경 audit log
+- 선택적 MCP gateway
+- remote change review
 
 완료 기준:
 
-- AI는 기본적으로 파일 직접 접근
-- MCP는 보조 기능으로만 사용
-- 토큰 비용이 큰 API wrapping을 기본 경로로 만들지 않음
+- local AI는 filesystem 직접 접근을 유지
+- 원격 adapter를 제거해도 Markdown workspace가 완전함
+- MCP는 실제 client 요구가 확인된 경우에만 도입

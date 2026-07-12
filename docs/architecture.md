@@ -1,5 +1,8 @@
 # Architecture
 
+- 상태: Accepted
+- 최종 갱신: 2026-07-12
+
 ## 결론
 
 KnowledgeOS의 핵심 아키텍처는 파일 시스템 중심입니다. DB를 원본으로 두지 않습니다.
@@ -102,12 +105,12 @@ Backend API
 - 파일 작업
 - 태그/백링크 보기
 
-후보 기술:
+Frontend 결정 상태:
 
-- Vue 3 또는 React
-- CodeMirror 6
-- PWA
-- Tailwind 또는 기존 UI kit
+- Vue 3, TypeScript, Pinia: Accepted
+- PWA: Accepted
+- CodeMirror 6: Proposed, mobile PoC 후 확정
+- styling system: Proposed
 
 ### Backend
 
@@ -179,7 +182,7 @@ Optional git commit
 ## 운영 고려사항
 
 - AI 대량 수정 전에는 `git diff`와 snapshot을 남겨야 합니다.
-- 삭제는 즉시 삭제보다 `.trash/` 이동이 안전합니다.
+- 삭제는 즉시 삭제보다 `_trash/` 이동이 안전합니다.
 - 모바일 네트워크 끊김을 고려해 저장 실패 UI가 필요합니다.
 - 동시 수정은 초기에는 last-write 방지용 `etag` 또는 file hash로 처리합니다.
 - 나중에 CRDT/실시간 협업을 붙일 수 있지만 MVP 범위에서는 제외합니다.

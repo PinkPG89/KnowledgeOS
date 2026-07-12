@@ -1,5 +1,8 @@
 # Incremental Implementation Plan
 
+- 상태: Active
+- 최종 갱신: 2026-07-12
+
 ## 실행 원칙
 
 각 작업 단위는 하나의 명확한 동작만 추가하고, 독립적인 test와 완료 기준을 가진다. Upstream 코드를 먼저 복사하지 않는다. 해당 단위의 contract test를 작성한 뒤 필요한 동작만 KnowledgeOS 언어와 구조로 구현한다.
@@ -32,11 +35,20 @@
 
 ### A02 Canonical path policy
 
+- 상태: 완료 (2026-07-12)
 - 범위: relative path parsing과 canonicalization
-- 허용: nested directory, Unicode, space, `.md`
-- 거부: absolute path, `..`, NUL, hidden segment, non-Markdown file
+- 계약: [Path Policy](path-policy.md)
+- 허용: nested directory, Unicode, space, underscore system directory, `.md`
+- 거부: absolute path, `.`, `..`, NUL/control, `%`, hidden segment, Windows separator, non-Markdown file
 - 완료 기준: traversal, encoded traversal, Windows separator test 통과
 - 비범위: filesystem read/write
+
+구현 결과:
+
+- OS path와 분리된 `CanonicalPath` value object를 추가했다.
+- directory path와 Markdown file path를 `CanonicalPath`, `MarkdownPath` 타입으로 분리했다.
+- 위험한 입력을 자동 normalization하지 않고 typed `PathError`로 거부한다.
+- Unicode, underscore system directory, traversal, hidden segment, length, extension 경계 테스트를 통과했다.
 
 ### A03 Root containment and symlink policy
 
@@ -183,8 +195,8 @@
 다음 순서는 세로 slice보다 기반 위험을 먼저 제거한다.
 
 1. A01 Backend project skeleton — 완료
-2. A02 Canonical path policy — 다음 단계
-3. A03 Root containment and symlink policy
+2. A02 Canonical path policy — 완료
+3. A03 Root containment and symlink policy — 다음 단계
 4. A04 Read file
 5. A05 Create file
 6. A06 Atomic update with conflict detection

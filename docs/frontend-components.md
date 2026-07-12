@@ -1,5 +1,8 @@
 # Frontend Components
 
+- 상태: Proposed
+- 최종 갱신: 2026-07-12
+
 ## 결론
 
 KnowledgeOS의 frontend는 모바일 우선 파일 작업공간입니다. 첫 화면은 랜딩 페이지가 아니라 파일 트리, 검색, Markdown editor에 바로 접근하는 작업 화면이어야 합니다.

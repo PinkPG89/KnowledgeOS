@@ -1,5 +1,8 @@
 # Decision Record
 
+- 상태: Active
+- 최종 갱신: 2026-07-12
+
 ## ADR-001: Markdown 파일을 Source of Truth로 둔다
 
 ### 결정

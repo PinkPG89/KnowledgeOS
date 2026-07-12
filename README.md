@@ -45,13 +45,14 @@ KnowledgeOS의 설계 철학은 매우 명확하며 단순합니다.
 
 ```text
 KnowledgeOS/
-├── ai/          # AI 연동 및 프롬프트 처리 어댑터 (원격 AI 연동 등 선택 기능)
-├── backend/     # Rust 기반 파일 시스템 API, 전문 검색 엔진, Git 백업 및 인증 서버
+├── backend/     # Rust 기반 filesystem core와 REST API
 ├── docker/      # 컨테이너화 및 손쉬운 서비스 배포 구성 파일
 ├── docs/        # 시스템 아키텍처 및 상세 세부 설계 문서 모음
 ├── frontend/    # 사용자가 직접 보게 되는 모바일 우선 PWA 웹 UI (HTML, CSS, JS)
 └── knowledge/   # 실제 사용자와 AI가 공동 작업할 로컬 Markdown 문서 저장소 (Core Vault)
 ```
+
+현재 구현된 backend 기능은 application bootstrap과 `/api/health`입니다. 파일 API, 검색, Git 백업, 인증은 설계가 확정된 순서대로 구현합니다.
 
 ---
 
@@ -186,3 +187,4 @@ cargo run
 - [Roadmap.md](docs/roadmap.md): MVP 제작부터 파일 인덱싱 검색, 최종 AI Agent 연동까지의 연차별 마일스톤.
 - [Reference Implementation Analysis.md](docs/reference-implementation-analysis.md): 유사 경쟁 오픈소스들의 벤치마킹 장단점 분석서.
 - [Incremental Implementation Plan.md](docs/incremental-implementation-plan.md): 점진적으로 모듈을 빌드하고 유닛 테스트로 검증하기 위한 꼼꼼한 마일스톤 계획서.
+- [Path Policy.md](docs/path-policy.md): API와 domain layer가 공유하는 안전한 상대 경로 규칙.
