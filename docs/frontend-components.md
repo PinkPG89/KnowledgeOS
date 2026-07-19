@@ -1,7 +1,7 @@
 # Frontend Components
 
-- 상태: Proposed
-- 최종 갱신: 2026-07-12
+- 상태: Accepted
+- 최종 갱신: 2026-07-19
 
 ## 결론
 
@@ -176,3 +176,9 @@ Client state:
 - 대용량 vault에서는 tree 전체 로딩 대신 lazy loading이 필요합니다.
 - 모바일 브라우저 background 상태에서 autosave가 중단될 수 있습니다.
 - 오프라인 편집은 별도 conflict queue 설계 전까지 MVP 범위에서 제외합니다.
+
+## Foundation Contract
+
+- B01 구현 기준은 [B01 Vue 3 PWA Skeleton Plan](b01-pwa-skeleton-plan.md)을 따릅니다.
+- PWA update는 editor draft 보호를 위해 자동 reload 대신 사용자 확인 prompt를 사용합니다.
+- B01과 B02의 styling은 CSS custom properties와 component-scoped CSS로 시작합니다.

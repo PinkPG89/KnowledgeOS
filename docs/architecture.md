@@ -110,7 +110,8 @@ Frontend 결정 상태:
 - Vue 3, TypeScript, Pinia: Accepted
 - PWA: Accepted
 - CodeMirror 6: Proposed, mobile PoC 후 확정
-- styling system: Proposed
+- CSS custom properties와 component-scoped CSS: Accepted for B01–B02
+- styling framework: Deferred
 
 ### Backend
 
