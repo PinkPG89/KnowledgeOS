@@ -11,5 +11,7 @@
 
 // UTF-8 Markdown snapshot read를 수행하는 `markdown` 모듈을 공개합니다.
 pub mod markdown;
+// UTF-8 Markdown exclusive create를 수행하는 writer 모듈을 공개합니다.
+pub mod markdown_writer;
 // 마크다운 저장소(Vault)의 물리적 루트 검증 및 실질적인 디바이스 접근 제어를 수행하는 `vault` 모듈을 공개합니다.
 pub mod vault;

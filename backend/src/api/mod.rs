@@ -8,7 +8,7 @@
 //!   이러한 격리는 비즈니스 로직이 웹 프레임워크인 `Axum`에 직접 의존하지 않게 만들며, 향후 gRPC, CLI 등 다른 프로토콜로 쉽게 확장할 수 있도록 도와줍니다.
 
 // 헬스체크 관련 API 엔드포인트 핸들러와 라우터를 포함하는 하위 모듈을 공개합니다.
-use axum::Router;
+use axum::{Router, routing::post};
 
 use crate::state::AppState;
 
@@ -19,5 +19,6 @@ pub mod health;
 pub fn router() -> Router<AppState> {
     Router::new()
         .merge(health::router())
+        .route("/files", post(files::create_file))
         .nest("/files", files::router())
 }

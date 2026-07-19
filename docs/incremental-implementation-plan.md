@@ -1,7 +1,7 @@
 # Incremental Implementation Plan
 
 - 상태: Active
-- 최종 갱신: 2026-07-12
+- 최종 갱신: 2026-07-19
 
 ## 실행 원칙
 
@@ -81,14 +81,31 @@
 
 ### A05 Create file
 
+- 상태: 완료 (2026-07-18)
 - 범위: parent 확인, exclusive create, UTF-8, size limit
 - 참고: Flatnotes의 overwrite 방지
 - 완료 기준: create와 duplicate conflict test 통과
 
+구현 결과:
+
+- `POST /api/files`와 `201 Created` 문서 응답 계약을 추가했다.
+- 기존 parent만 허용하고 `create_new(true)`로 동시 요청에서도 덮어쓰기를 방지한다.
+- UTF-8 byte 제한, write·flush·file `fsync`, 실패한 불완전 파일 정리를 적용했다.
+- malformed JSON, parent 오류, 중복, symlink, 크기 제한을 공통 JSON 오류로 반환한다.
+
 ### A06 Atomic update with conflict detection
 
+- 상태: 완료 (2026-07-19)
 - 범위: `base_hash` 비교, temp write, fsync, atomic replace
 - 완료 기준: stale hash는 409, 정상 write 후 hash 변경, 실패 시 원본 보존
+
+구현 결과:
+
+- `PUT /api/files/{*path}`와 전체 문서 응답을 추가했다.
+- backend write lock과 교체 직전 hash 재검증으로 동일 base hash 동시 저장을 차단한다.
+- 같은 directory의 hidden temp 파일을 동기화한 뒤 atomic rename한다.
+- stale hash, temp write 실패, oversized content에서는 원본을 보존한다.
+- 외부 local process CAS race와 parent directory `fsync`는 후속 보안·운영 강화 범위로 유지한다.
 
 ### A07 Create directory
 
@@ -215,9 +232,9 @@
 2. A02 Canonical path policy — 완료
 3. A03 Root containment and symlink policy — 완료
 4. A04 Read file — 완료
-5. A05 Create file — 다음 단계
-6. A06 Atomic update with conflict detection
-7. A10 Lazy tree endpoint
+5. A05 Create file — 완료
+6. A06 Atomic update with conflict detection — 완료
+7. A10 Lazy tree endpoint — 다음 단계
 8. B01 PWA project skeleton
 9. B02 Responsive app shell
 10. B03 Tree state model

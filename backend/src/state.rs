@@ -2,6 +2,7 @@ use crate::{
     config::AppConfig,
     infrastructure::{
         markdown::MarkdownReader,
+        markdown_writer::MarkdownWriter,
         vault::{VaultError, VaultRoot},
     },
 };
@@ -21,6 +22,8 @@ pub struct AppState {
     /// 물리적 파일 시스템의 경계와 보안 격리를 관리하는 Vault 리소스를 저장
     pub vault: VaultRoot,
     pub markdown_reader: MarkdownReader,
+    /// 기존 파일을 덮어쓰지 않는 Markdown 생성 서비스
+    pub markdown_writer: MarkdownWriter,
 }
 
 impl AppState {
@@ -39,6 +42,7 @@ impl AppState {
         // VaultRoot를 개방하여 물리 경로를 획득하고 내부 검증을 진행합니다.
         let vault = VaultRoot::open(&config.knowledge_root)?;
         let markdown_reader = MarkdownReader::new(vault.clone(), config.max_markdown_bytes);
+        let markdown_writer = MarkdownWriter::new(vault.clone(), config.max_markdown_bytes);
 
         // 서버 기동 로그를 Tracing 시스템에 기록합니다.
         // `%` 접두사는 해당 인스턴스의 Display 포맷을 사용해 구조화된 로깅 필드로 치환 출력하라는 지시어입니다.
@@ -54,6 +58,7 @@ impl AppState {
             config,
             vault,
             markdown_reader,
+            markdown_writer,
         })
     }
 }

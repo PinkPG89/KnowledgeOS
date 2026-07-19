@@ -1,8 +1,8 @@
 # API Draft
 
 - 상태: Draft
-- 구현 상태: `/api/health`, `GET /api/files/{*path}` Implemented, 나머지는 Planned
-- 최종 갱신: 2026-07-12
+- 구현 상태: `/api/health`, `GET·PUT /api/files/{*path}`, `POST /api/files` Implemented, 나머지는 Planned
+- 최종 갱신: 2026-07-19
 
 ## 원칙
 
@@ -40,6 +40,26 @@ API는 UI를 위한 얇은 파일 시스템 래퍼입니다. 원본 상태는 AP
 - `path_not_allowed`: 403
 - `file_not_found`: 404
 - `read_conflict`: 409
+- `file_too_large`: 413
+- `not_a_markdown_file`, `not_a_regular_file`, `invalid_utf8`: 422
+- `internal_error`: 500
+
+파일 생성 오류 code:
+
+- `invalid_request`, `invalid_path`: 400
+- `path_not_allowed`: 403
+- `parent_not_found`: 404
+- `file_already_exists`: 409
+- `file_too_large`: 413
+- `not_a_markdown_file`, `parent_not_directory`: 422
+- `internal_error`: 500
+
+파일 수정 오류 code:
+
+- `invalid_request`, `invalid_path`, `invalid_base_hash`: 400
+- `path_not_allowed`: 403
+- `file_not_found`: 404
+- `write_conflict`: 409
 - `file_too_large`: 413
 - `not_a_markdown_file`, `not_a_regular_file`, `invalid_utf8`: 422
 - `internal_error`: 500
@@ -130,7 +150,7 @@ GET /api/files/{*path}
 
 ### Write File
 
-상태: Planned
+상태: Implemented
 
 ```http
 PUT /api/files/{*path}
@@ -147,19 +167,28 @@ PUT /api/files/{*path}
 
 `base_hash`가 현재 파일 hash와 다르면 `409 Conflict`를 반환합니다.
 
-응답:
+성공 시 `200 OK`:
 
 ```json
 {
   "path": "projects/agent.md",
+  "content": "# Agent\nUpdated content\n",
   "hash": "sha256:new...",
-  "modified_at": "2026-07-11T12:05:00Z"
+  "size": 24,
+  "modified_at": "2026-07-19T12:05:00.000Z"
 }
 ```
 
+- `base_hash`는 `sha256:`와 64자리 lowercase hexadecimal 형식이어야 합니다.
+- 현재 hash가 다르면 원본을 유지하고 `409 write_conflict`와 `current_hash`를 반환합니다.
+- 같은 directory의 temp 파일에 write·flush·file `fsync`한 뒤 atomic rename합니다.
+- backend 내부 동시 write는 직렬화하며 같은 base hash를 사용한 요청 중 하나만 성공합니다.
+- 외부 local process가 최종 hash 확인과 rename 사이에 파일을 바꾸는 좁은 TOCTOU race는 별도 보안 강화 단계에서 다룹니다.
+- parent directory `fsync`는 수행하지 않으므로 전원 장애까지 포함한 rename 영속성 강화는 후속 운영 단계입니다.
+
 ### Create File
 
-상태: Planned
+상태: Implemented
 
 ```http
 POST /api/files
@@ -173,6 +202,23 @@ POST /api/files
   "content": "# New Note\n"
 }
 ```
+
+성공 시 `201 Created`:
+
+```json
+{
+  "path": "projects/new-note.md",
+  "content": "# New Note\n",
+  "hash": "sha256:...",
+  "size": 11,
+  "modified_at": "2026-07-18T12:00:00.000Z"
+}
+```
+
+- 부모 directory는 미리 존재해야 하며 자동 생성하지 않습니다.
+- 기존 file 또는 directory를 덮어쓰지 않고 `409 file_already_exists`를 반환합니다.
+- 생성 content는 읽기 API와 동일한 UTF-8 byte 제한을 적용합니다.
+- write, flush, file `fsync`가 완료된 뒤 성공을 반환합니다.
 
 ### Create Directory
 
