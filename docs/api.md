@@ -329,7 +329,7 @@ GET /api/metadata/{*path}
 }
 ```
 
-### Git Backup
+### Git Version Snapshot
 
 상태: Planned
 
@@ -341,11 +341,11 @@ POST /api/git/commit
 
 ```json
 {
-  "message": "Manual backup"
+  "message": "Manual version snapshot"
 }
 ```
 
-MVP에서는 내부 관리자 전용으로 제한합니다.
+MVP에서는 내부 관리자 전용으로 제한합니다. 이 endpoint는 local commit을 생성하며 별도 repository push와 offsite backup 성공을 의미하지 않습니다.
 
 ## 보안 기준
 

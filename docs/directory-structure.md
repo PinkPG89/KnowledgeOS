@@ -112,9 +112,11 @@ references/filesystem-security.md
 
 ## 운영 고려사항
 
-- `knowledge/`는 반드시 backup 대상입니다.
+- `knowledge/`는 반드시 별도 장치 또는 offsite backup 대상입니다.
 - `.knowledgeos/index.sqlite`는 backup 대상이 아니어도 됩니다.
 - 대량 변경 전에는 Git snapshot 또는 tar snapshot을 남깁니다.
+- application source repository와 사용자 Vault repository는 분리합니다.
+- 같은 disk의 local Git commit은 version history이며 장치 장애 backup이 아닙니다.
 - 외부 편집기와 AI가 동시에 파일을 바꿀 수 있으므로 저장 API는 hash 기반 충돌 감지를 사용합니다.
 - `_trash/`도 용량 제한과 보존 기간 정책이 필요합니다.
 

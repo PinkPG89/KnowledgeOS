@@ -145,7 +145,8 @@ Frontend 결정 상태:
 
 - `knowledge/`: Markdown 원본입니다.
 - `.knowledgeos/`: 설정, 캐시, lock, index를 둡니다.
-- Git repository: 백업과 감사 로그입니다.
+- Vault Git repository: version history와 감사 로그입니다.
+- 별도 bare repository 또는 offsite storage: 장치 장애 복구용 복제본입니다.
 
 `knowledge/`와 `.knowledgeos/`는 의존 방향이 반대입니다. `.knowledgeos/`는 `knowledge/`에서 재생성할 수 있지만, `knowledge/`는 `.knowledgeos/`에 의존하면 안 됩니다.
 
@@ -164,7 +165,7 @@ Write markdown file
   ↓
 Invalidate/rebuild index
   ↓
-Optional git commit
+Optional Git version snapshot
 ```
 
 파일 읽기와 같은 blocking filesystem operation은 Tokio blocking pool에서 실행해 async HTTP worker를 점유하지 않습니다.
@@ -180,12 +181,13 @@ Invalidate/rebuild index
   ↓
 UI reflects updated file
   ↓
-Optional git commit
+Optional Git version snapshot
 ```
 
 ## 운영 고려사항
 
 - AI 대량 수정 전에는 `git diff`와 snapshot을 남겨야 합니다.
+- local Git commit과 장치 장애 backup을 혼동하지 않으며, Vault를 물리적으로 분리된 repository 또는 offsite storage로 복제합니다.
 - 삭제는 즉시 삭제보다 `_trash/` 이동이 안전합니다.
 - 모바일 네트워크 끊김을 고려해 저장 실패 UI가 필요합니다.
 - 동시 수정은 초기에는 last-write 방지용 `etag` 또는 file hash로 처리합니다.

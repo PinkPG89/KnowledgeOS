@@ -40,6 +40,7 @@
 
 - [Reference Implementation Analysis](reference-implementation-analysis.md)
 - [Incremental Implementation Plan](incremental-implementation-plan.md)
+- [Git Versioning and Backup Policy](git-backup.md)
 
 ## Phase 1: MVP
 
@@ -49,7 +50,7 @@
 - 파일 읽기/저장
 - 파일 생성/삭제/이름변경
 - 검색
-- Git 수동 백업
+- Git 수동 version snapshot
 
 완료 기준:
 
@@ -63,7 +64,7 @@
 - index rebuild
 - optimistic concurrency
 - `_trash/` 복구
-- 자동 Git backup
+- 자동 Git version snapshot과 별도 repository 복제
 - 인증/권한
 - Docker Compose
 

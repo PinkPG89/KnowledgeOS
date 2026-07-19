@@ -16,13 +16,13 @@ KnowledgeOS의 설계 철학은 매우 명확하며 단순합니다.
 │ Database / index     =  Rebuildable cache (재생성 가능한 캐시)│
 │ UI (Frontend)        =  Human client (인간 사용자를 위한 화면) │
 │ AI Agent             =  Direct filesystem client (직접 파일 접근)│
-│ Git                  =  Backup and audit trail (백업 & 추적 도구) │
+│ Git                  =  Version history and audit (이력 & 추적 도구)│
 └─────────────────────────────────────────────────────────────┘
 ```
 
 * **데이터의 주인은 파일입니다**: 데이터베이스는 언제든지 날아가거나 완전히 새로 구축해도 상관없는 '보조 캐시'일 뿐입니다. 모든 진짜 지식은 리눅스 파일 시스템 내부의 마크다운 파일(`.md`)로 영구 보존됩니다.
 * **AI와 인간의 동등한 접근성**: 인간은 브라우저(UI)를 통해 깔끔한 화면으로 노트를 작성하고, AI Agent는 별도의 복잡한 API나 제약 사항 없이 로컬 파일 시스템을 통해 마크다운 파일을 직접 열어서 읽고 수정합니다.
-* **안전한 변경 기록**: Git은 복잡한 협업 도구라기보다, 작성 중인 지식의 안전한 자동 백업 및 복구(Audit Trail)를 목적으로 작동합니다.
+* **안전한 변경 기록과 복제**: Git commit은 변경 이력과 복구 지점을 만들고, 별도 disk·NAS·server의 repository 복제 또는 encrypted offsite backup이 장치 장애에 대비합니다.
 
 ---
 
@@ -32,7 +32,7 @@ KnowledgeOS의 설계 철학은 매우 명확하며 단순합니다.
 - **모바일 우선(Mobile-First) PWA**: 스마트폰(iPhone, Android)과 PC에서 끊김 없는 사용자 경험 제공.
 - **실제 디렉터리 기반 파일 트리**: 로컬 시스템의 폴더 구조를 그대로 반영하여 직관적인 탐색 가능.
 - **마크다운 편집기**: 강력하고 부드러운 노트 작성 인터페이스.
-- **파일 CRUD 및 Git 자동 백업**: 파일 생성, 조회, 수정, 삭제, 이름 변경과 변경 이력의 자동 백업.
+- **파일 CRUD 및 Git version snapshot**: 파일 생성, 조회, 수정, 삭제, 이름 변경과 변경 이력을 기록하고 별도 저장소로 복제.
 - **전문 검색(Full-text Search)**: 본문 텍스트 전체를 관통하는 빠른 검색 기능.
 
 ### 포함하지 않는 범위 (Non-Goals)
@@ -54,7 +54,7 @@ KnowledgeOS/
 
 Docker 개발 실행 방법은 [Docker Development Runtime](docs/docker.md)을 참고합니다.
 
-현재 구현된 backend 기능은 application bootstrap, `/api/health`, canonical path 검증, 단일 활성 Vault containment, UTF-8 Markdown 읽기 API입니다. 파일 쓰기 API, 검색, Git 백업, 인증은 설계가 확정된 순서대로 구현합니다.
+현재 구현된 backend 기능은 application bootstrap, `/api/health`, canonical path 검증, 단일 활성 Vault containment, UTF-8 Markdown 읽기와 안전한 생성·수정 API입니다. Tree API, 검색, Git version snapshot과 repository 복제, 인증은 설계가 확정된 순서대로 구현합니다.
 
 ---
 
@@ -201,3 +201,4 @@ cargo run
 - [Incremental Implementation Plan.md](docs/incremental-implementation-plan.md): 점진적으로 모듈을 빌드하고 유닛 테스트로 검증하기 위한 꼼꼼한 마일스톤 계획서.
 - [Path Policy.md](docs/path-policy.md): API와 domain layer가 공유하는 안전한 상대 경로 규칙.
 - [Vault Policy.md](docs/vault-policy.md): 단일 활성 Vault 선택과 symlink·containment 보안 경계.
+- [Git Backup Policy.md](docs/git-backup.md): Git version snapshot, 별도 repository 복제와 선택적 offsite backup 운영 기준.

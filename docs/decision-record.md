@@ -46,11 +46,11 @@ AI가 파일을 직접 수정해도 앱 상태가 복구 가능해야 한다.
 
 `rm cache.db && rebuild-index` 후에도 앱이 정상 동작해야 한다.
 
-## ADR-003: Git은 백업과 감사 로그로 사용한다
+## ADR-003: Git은 version history와 감사 로그로 사용한다
 
 ### 결정
 
-Git은 필수 동기화 계층이 아니라 백업, diff, rollback 도구로 사용한다.
+Git은 필수 동기화 계층이 아니라 version snapshot, diff, rollback 도구로 사용한다. 장치 장애 복구는 별도 disk, NAS 또는 server의 repository 복제와 선택적 offsite backup으로 담당한다.
 
 ### 이유
 
@@ -59,6 +59,14 @@ Git은 필수 동기화 계층이 아니라 백업, diff, rollback 도구로 사
 ### 단점
 
 실시간 동기화 문제는 Git이 해결하지 않는다.
+
+같은 disk의 local commit은 disk 장애에 대한 backup이 아니다. application source repository와 사용자 Vault repository도 분리해야 한다.
+
+### 운영 기준
+
+- 개인 server MVP는 별도 Git service 없이 bare repository를 사용할 수 있다.
+- Forgejo나 Gitea는 Web UI, 다중 사용자, 권한 관리가 필요할 때만 도입한다.
+- 상세 정책은 [Git Versioning and Backup Policy](git-backup.md)를 따른다.
 
 ## ADR-004: MVP는 직접 구현을 우선 검토한다
 
