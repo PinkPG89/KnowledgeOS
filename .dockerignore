@@ -1,0 +1,11 @@
+.git
+.gitignore
+.cargo-home
+.rustup-home
+.venv
+backend/target
+frontend/node_modules
+frontend/dist
+knowledge
+*.log
+.DS_Store

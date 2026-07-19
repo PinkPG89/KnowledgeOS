@@ -1,0 +1,32 @@
+name: knowledgeos
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+      args:
+        APP_UID: ${HOST_UID:-1000}
+        APP_GID: ${HOST_GID:-1000}
+    image: knowledgeos-backend:local
+    environment:
+      KNOWLEDGEOS_BIND_ADDRESS: 0.0.0.0:3000
+      KNOWLEDGEOS_KNOWLEDGE_ROOT: /data/knowledge
+      KNOWLEDGEOS_LOG: ${KNOWLEDGEOS_LOG:-knowledgeos_backend=info}
+      KNOWLEDGEOS_MAX_MARKDOWN_BYTES: ${KNOWLEDGEOS_MAX_MARKDOWN_BYTES:-5242880}
+    ports:
+      - "${KNOWLEDGEOS_PORT:-3000}:3000"
+    volumes:
+      - type: bind
+        source: ./knowledge
+        target: /data/knowledge
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+    stop_grace_period: 10s

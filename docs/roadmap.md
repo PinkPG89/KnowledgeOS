@@ -23,6 +23,7 @@
 - [x] UTF-8 Markdown read API와 SHA-256 snapshot
 - [x] Exclusive Markdown create API
 - [x] Atomic update와 base hash conflict detection
+- [x] Docker backend build와 Vault bind mount smoke 구성
 - [x] KnowledgeOS 핵심 아키텍처 확정
 - [x] 디렉터리 구조 확정
 - API 초안과 구현 상태 동기화

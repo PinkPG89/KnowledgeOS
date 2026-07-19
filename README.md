@@ -52,6 +52,8 @@ KnowledgeOS/
 └── knowledge/   # 실제 사용자와 AI가 공동 작업할 로컬 Markdown 문서 저장소 (Core Vault)
 ```
 
+Docker 개발 실행 방법은 [Docker Development Runtime](docs/docker.md)을 참고합니다.
+
 현재 구현된 backend 기능은 application bootstrap, `/api/health`, canonical path 검증, 단일 활성 Vault containment, UTF-8 Markdown 읽기 API입니다. 파일 쓰기 API, 검색, Git 백업, 인증은 설계가 확정된 순서대로 구현합니다.
 
 ---
