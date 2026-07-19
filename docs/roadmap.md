@@ -1,7 +1,12 @@
 # Roadmap
 
 - 상태: Active
-- 최종 갱신: 2026-07-12
+- 최종 갱신: 2026-07-19
+
+## 시각화
+
+- [KnowledgeOS 좌→우 구현 로드맵](knowledgeos-roadmap.drawio)
+- Draw.io 또는 [diagrams.net](https://app.diagrams.net/)에서 열어 편집합니다.
 
 ## Phase 0: 조사와 기준 확정
 
@@ -16,6 +21,8 @@
 - [x] Canonical path policy와 Rust value object
 - [x] 단일 활성 Vault와 symlink containment policy
 - [x] UTF-8 Markdown read API와 SHA-256 snapshot
+- [x] Exclusive Markdown create API
+- [x] Atomic update와 base hash conflict detection
 - [x] KnowledgeOS 핵심 아키텍처 확정
 - [x] 디렉터리 구조 확정
 - API 초안과 구현 상태 동기화
