@@ -94,32 +94,33 @@ GET /api/tree
 
 쿼리:
 
-- `path`: 특정 디렉터리부터 조회합니다.
-- `depth`: tree 깊이를 제한합니다.
+- `path`: 생략하거나 빈 값이면 Vault root, 값이 있으면 해당 directory의 직계 children을 조회합니다.
+- 응답 깊이는 항상 1이며 recursive `depth` parameter를 제공하지 않습니다.
 
 응답 예시:
 
 ```json
 {
-  "root": "knowledge",
-  "nodes": [
+  "path": "projects",
+  "entries": [
     {
       "type": "directory",
-      "path": "projects",
-      "name": "projects",
-      "children": [
-        {
-          "type": "file",
-          "path": "projects/agent.md",
-          "name": "agent.md",
-          "size": 1200,
-          "modified_at": "2026-07-11T12:00:00Z"
-        }
-      ]
+      "path": "projects/agent",
+      "name": "agent",
+      "modified_at": "2026-07-19T12:00:00.000Z"
+    },
+    {
+      "type": "file",
+      "path": "projects/README.md",
+      "name": "README.md",
+      "size": 1200,
+      "modified_at": "2026-07-19T12:00:00.000Z"
     }
   ]
 }
 ```
+
+상세 구현 계약은 [A10 Lazy Tree API Plan](a10-lazy-tree-plan.md)을 따릅니다.
 
 ### Read File
 

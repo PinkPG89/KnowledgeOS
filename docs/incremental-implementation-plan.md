@@ -126,8 +126,10 @@
 
 ### A10 Lazy tree endpoint
 
+- 상태: 계획 확정 (2026-07-19)
 - 범위: 특정 path의 직계 children 조회, directory-first stable sort
 - 참고: Many Notes lazy tree
+- 계약: [A10 Lazy Tree API Plan](a10-lazy-tree-plan.md)
 - 완료 기준: depth 1 응답, hidden/symlink 제외, stable ordering test 통과
 
 ## Track B: Frontend Foundation
