@@ -11,3 +11,5 @@
 pub mod document;
 // 경로 검증 및 마크다운 파일 전용 경로 규칙을 다루는 `path` 하위 모듈을 공개합니다.
 pub mod path;
+// Lazy tree 조회에 사용하는 filesystem 독립 응답 모델입니다.
+pub mod tree;

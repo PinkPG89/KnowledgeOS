@@ -1,6 +1,6 @@
 # A10 Lazy Tree API Plan
 
-- 상태: Accepted
+- 상태: Completed
 - 최종 갱신: 2026-07-19
 
 ## Summary
@@ -80,3 +80,10 @@ GET /api/tree?path=projects
 - pagination, recursive depth, hash, content, title/frontmatter parsing은 포함하지 않습니다.
 - directory listing은 filesystem transaction snapshot이 아니며 요청 시점의 best-effort depth-1 view입니다.
 - A10 완료 후 B01 Vue 3 PWA skeleton을 시작합니다.
+
+## Implementation Result
+
+- domain listing model, filesystem `TreeReader`, Axum adapter를 분리했습니다.
+- root는 빈 문자열 응답으로 표현하고 내부에서는 `Option<CanonicalPath>::None`을 유지합니다.
+- scan 중 사라진 child는 제외하고, 나머지 metadata와 directory read 오류는 500으로 처리합니다.
+- unit 3개와 API contract 4개를 추가해 depth 1, 정렬, 필터, Unicode query와 오류 계약을 검증했습니다.

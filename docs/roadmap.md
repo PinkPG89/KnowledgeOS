@@ -24,6 +24,7 @@
 - [x] Exclusive Markdown create API
 - [x] Atomic update와 base hash conflict detection
 - [x] Docker backend build와 Vault bind mount smoke 구성
+- [x] Lazy Tree API와 depth-1 stable listing
 - [x] KnowledgeOS 핵심 아키텍처 확정
 - [x] 디렉터리 구조 확정
 - API 초안과 구현 상태 동기화
@@ -45,7 +46,8 @@
 ## Phase 1: MVP
 
 - 모바일 PWA shell
-- 파일 트리
+- [x] 파일 트리 backend API
+- 파일 트리 frontend UI
 - Markdown editor
 - 파일 읽기/저장
 - 파일 생성/삭제/이름변경

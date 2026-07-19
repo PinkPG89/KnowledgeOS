@@ -28,6 +28,9 @@ test "${create_status}" = "201"
 
 base_hash=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["hash"])' "${temporary_directory}/create.json")
 
+tree_payload=$(curl --fail --silent --show-error "${base_url}/api/tree")
+python3 -c 'import json,sys; payload=json.load(sys.stdin); entry=next(item for item in payload["entries"] if item["path"] == "_docker_smoke.md"); assert entry["type"] == "file"; assert entry["size"] == 15' <<<"${tree_payload}"
+
 read_payload=$(curl --fail --silent --show-error "${base_url}/api/files/${relative_path}")
 python3 -c 'import json,sys; payload=json.load(sys.stdin); assert payload["content"] == "# Docker Smoke\n"' <<<"${read_payload}"
 
@@ -42,4 +45,4 @@ test "${update_status}" = "200"
 
 python3 -c 'import pathlib,sys; assert pathlib.Path(sys.argv[1]).read_text() == "# Docker Smoke Updated\n"' "${host_path}"
 
-echo "KnowledgeOS Docker smoke test passed: health, create, read, update, bind mount"
+echo "KnowledgeOS Docker smoke test passed: health, create, tree, read, update, bind mount"

@@ -13,5 +13,7 @@
 pub mod markdown;
 // UTF-8 Markdown exclusive create를 수행하는 writer 모듈을 공개합니다.
 pub mod markdown_writer;
+// 직계 자식만 조회하는 lazy tree filesystem adapter를 공개합니다.
+pub mod tree;
 // 마크다운 저장소(Vault)의 물리적 루트 검증 및 실질적인 디바이스 접근 제어를 수행하는 `vault` 모듈을 공개합니다.
 pub mod vault;

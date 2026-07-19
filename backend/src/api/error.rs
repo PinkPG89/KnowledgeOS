@@ -10,7 +10,7 @@ use crate::{
     domain::path::PathError,
     infrastructure::{
         markdown::MarkdownReadError, markdown_writer::MarkdownUpdateError,
-        markdown_writer::MarkdownWriteError, vault::VaultError,
+        markdown_writer::MarkdownWriteError, tree::TreeReadError, vault::VaultError,
     },
 };
 
@@ -205,6 +205,25 @@ impl ApiError {
         }
     }
 
+    /// Lazy tree filesystem 오류를 공개 directory API 계약으로 변환합니다.
+    pub fn from_tree(error: TreeReadError) -> Self {
+        match error {
+            TreeReadError::Vault(error) => Self::from_tree_vault(error),
+            TreeReadError::NotFound(path) => Self::directory_not_found(&path),
+            TreeReadError::NotDirectory(path) => Self::new(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                "not_a_directory",
+                "Path does not reference a directory",
+                Some(json!({ "path": path })),
+            ),
+            TreeReadError::ReadDirectory { path, source }
+            | TreeReadError::Metadata { path, source } => {
+                tracing::error!(path = %path.display(), %source, "tree listing I/O failure");
+                Self::internal()
+            }
+        }
+    }
+
     #[must_use]
     pub fn invalid_base_hash() -> Self {
         Self::new(
@@ -317,6 +336,46 @@ impl ApiError {
                 Self::internal()
             }
         }
+    }
+
+    fn from_tree_vault(error: VaultError) -> Self {
+        match error {
+            VaultError::TargetNotFound(path) => Self::directory_not_found(&path),
+            VaultError::SymlinkNotAllowed(path) => Self::new(
+                StatusCode::FORBIDDEN,
+                "path_not_allowed",
+                "Path is not allowed by the active Vault policy",
+                Some(json!({ "path": path })),
+            ),
+            VaultError::OutsideVault(path) => {
+                tracing::warn!(resolved_path = %path.display(), "Vault containment rejected a tree path");
+                Self::new(
+                    StatusCode::FORBIDDEN,
+                    "path_not_allowed",
+                    "Path is not allowed by the active Vault policy",
+                    None,
+                )
+            }
+            VaultError::NonDirectoryAncestor(path) => Self::new(
+                StatusCode::UNPROCESSABLE_ENTITY,
+                "not_a_directory",
+                "A path segment is not a directory",
+                Some(json!({ "path": path })),
+            ),
+            other => {
+                tracing::error!(error = %other, "Vault tree failure");
+                Self::internal()
+            }
+        }
+    }
+
+    fn directory_not_found(path: &str) -> Self {
+        Self::new(
+            StatusCode::NOT_FOUND,
+            "directory_not_found",
+            "Directory was not found",
+            Some(json!({ "path": path })),
+        )
     }
 
     /// 신규 에러 객체를 규격대로 생성해 내는 생성 헬퍼 함수입니다.

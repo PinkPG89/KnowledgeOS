@@ -86,7 +86,7 @@ GET /api/health
 
 ### Tree
 
-상태: Planned
+상태: Implemented
 
 ```http
 GET /api/tree
@@ -121,6 +121,11 @@ GET /api/tree
 ```
 
 상세 구현 계약은 [A10 Lazy Tree API Plan](a10-lazy-tree-plan.md)을 따릅니다.
+
+- directory와 lowercase `.md` file만 반환합니다.
+- hidden entry, descendant symlink, special file, non-Markdown file은 제외합니다.
+- directory-first, 각 group 안에서 Rust 문자열 오름차순으로 정렬합니다.
+- blocking filesystem scan은 Tokio blocking pool에서 실행합니다.
 
 ### Read File
 

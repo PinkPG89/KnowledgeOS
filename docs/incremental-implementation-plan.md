@@ -126,11 +126,18 @@
 
 ### A10 Lazy tree endpoint
 
-- 상태: 계획 확정 (2026-07-19)
+- 상태: 완료 (2026-07-19)
 - 범위: 특정 path의 직계 children 조회, directory-first stable sort
 - 참고: Many Notes lazy tree
 - 계약: [A10 Lazy Tree API Plan](a10-lazy-tree-plan.md)
 - 완료 기준: depth 1 응답, hidden/symlink 제외, stable ordering test 통과
+
+구현 결과:
+
+- `GET /api/tree`와 nested `path` query를 depth 1 lazy loading 계약으로 구현했다.
+- directory와 lowercase Markdown file만 노출하고 hidden, symlink, special, non-Markdown entry는 제외한다.
+- directory-first와 Rust 문자열 오름차순 정렬을 적용했다.
+- blocking scan 격리, typed error mapping과 scan race 테스트를 추가했다.
 
 ## Track B: Frontend Foundation
 
@@ -236,8 +243,8 @@
 4. A04 Read file — 완료
 5. A05 Create file — 완료
 6. A06 Atomic update with conflict detection — 완료
-7. A10 Lazy tree endpoint — 다음 단계
-8. B01 PWA project skeleton
+7. A10 Lazy tree endpoint — 완료
+8. B01 PWA project skeleton — 다음 단계
 9. B02 Responsive app shell
 10. B03 Tree state model
 11. B04 Lazy tree UI
