@@ -1,7 +1,7 @@
 # Roadmap
 
 - 상태: Active
-- 최종 갱신: 2026-07-19
+- 최종 갱신: 2026-07-22
 
 ## 시각화
 
@@ -26,6 +26,7 @@
 - [x] Docker backend build와 Vault bind mount smoke 구성
 - [x] Lazy Tree API와 depth-1 stable listing
 - [x] Vue 3 installable PWA foundation과 offline shell
+- [x] Desktop 3영역과 mobile drawer responsive shell
 - [x] KnowledgeOS 핵심 아키텍처 확정
 - [x] 디렉터리 구조 확정
 - API 초안과 구현 상태 동기화
@@ -47,7 +48,7 @@
 ## Phase 1: MVP
 
 - [x] 설치 가능한 PWA foundation
-- 모바일 responsive app shell
+- [x] 모바일 responsive app shell
 - [x] 파일 트리 backend API
 - 파일 트리 frontend UI
 - Markdown editor

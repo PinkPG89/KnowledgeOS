@@ -1,7 +1,7 @@
 # Frontend Components
 
 - 상태: Accepted
-- 최종 갱신: 2026-07-19
+- 최종 갱신: 2026-07-22
 
 ## 결론
 
@@ -180,5 +180,7 @@ Client state:
 ## Foundation Contract
 
 - B01 구현 기준은 [B01 Vue 3 PWA Skeleton Plan](b01-pwa-skeleton-plan.md)을 따릅니다.
+- B02 구현 기준은 [B02 Responsive App Shell Plan](b02-responsive-app-shell-plan.md)을 따릅니다.
 - PWA update는 editor draft 보호를 위해 자동 reload 대신 사용자 확인 prompt를 사용합니다.
 - B01과 B02의 styling은 CSS custom properties와 component-scoped CSS로 시작합니다.
+- Desktop panel preference만 local storage에 보존하며 mobile drawer 상태는 일시 상태로 유지합니다.

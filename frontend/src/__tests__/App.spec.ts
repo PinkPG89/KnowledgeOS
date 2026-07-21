@@ -23,13 +23,13 @@ describe('KnowledgeOS app shell', () => {
     const wrapper = await mountAt('/')
 
     expect(wrapper.get('header').text()).toContain('KnowledgeOS')
-    expect(wrapper.get('main').text()).toContain('Vue 3 PWA Shell')
+    expect(wrapper.get('main').text()).toContain('Markdown 작업공간')
   })
 
   it('renders the not-found route inside the shell', async () => {
     const wrapper = await mountAt('/missing-view')
 
-    expect(wrapper.get('header').text()).toContain('KnowledgeOS')
     expect(wrapper.get('main').text()).toContain('요청한 화면을 찾을 수 없습니다.')
+    expect(wrapper.get('a').text()).toContain('KnowledgeOS로 돌아가기')
   })
 })

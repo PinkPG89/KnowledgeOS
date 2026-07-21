@@ -9,7 +9,7 @@
 <style scoped>
 .not-found {
   display: grid;
-  min-height: calc(100dvh - 4rem);
+  min-height: 100dvh;
   place-content: center;
   padding: 1rem;
   text-align: center;

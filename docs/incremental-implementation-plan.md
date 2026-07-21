@@ -157,9 +157,18 @@
 
 ### B02 Responsive app shell
 
+- 상태: 완료 (2026-07-22)
 - 범위: desktop 3영역, mobile drawer와 backdrop
 - 참고: Many Notes `Show.vue`, `layout.ts`
 - 완료 기준: breakpoint 전환과 panel preference component test 통과
+
+구현 결과:
+
+- `64rem` 기준 desktop 3영역과 mobile overlay drawer를 구현했다.
+- desktop panel preference만 local storage에 보존하고 mobile drawer 상태는 저장하지 않는다.
+- breakpoint 전환 시 일시적인 mobile overlay를 정리한다.
+- panel 접근성 속성, 44px touch target과 reduced motion 처리를 추가했다.
+- layout store와 workspace component 상태 전환을 unit test로 검증했다.
 
 ### B03 Tree state model
 
@@ -253,8 +262,8 @@
 6. A06 Atomic update with conflict detection — 완료
 7. A10 Lazy tree endpoint — 완료
 8. B01 PWA project skeleton — 완료
-9. B02 Responsive app shell — 다음 단계
-10. B03 Tree state model
+9. B02 Responsive app shell — 완료
+10. B03 Tree state model — 다음 단계
 11. B04 Lazy tree UI
 12. B05 Open file flow
 
