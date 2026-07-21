@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="KnowledgeOS">
+  <rect width="512" height="512" rx="112" fill="#16221b"/>
+  <path d="M144 112h72v116l96-116h88L286 244l122 156h-90L238 294l-22 25v81h-72z" fill="#f4f1e8"/>
+  <circle cx="384" cy="128" r="36" fill="#54b884"/>
+</svg>

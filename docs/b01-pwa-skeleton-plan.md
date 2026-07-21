@@ -1,7 +1,7 @@
 # B01 Vue 3 PWA Skeleton Plan
 
-- 상태: Accepted
-- 최종 갱신: 2026-07-19
+- 상태: Completed
+- 최종 갱신: 2026-07-21
 
 ## Summary
 
@@ -55,7 +55,7 @@ frontend/
 │   ├── App.vue
 │   ├── main.ts
 │   └── pwa.ts
-├── tests/
+├── src/__tests__/
 ├── index.html
 ├── package.json
 ├── tsconfig*.json
@@ -95,3 +95,13 @@ frontend/
 - production build에 Web App Manifest와 service worker가 생성됩니다.
 - browser에서 standalone 설치 조건을 만족하는 name, theme color와 icon을 제공합니다.
 - B01 완료 후 B02 Responsive App Shell을 진행합니다.
+
+## Implementation Result
+
+- Node.js 20.19.4에서 동작하는 Vue 3.5, Vite 7, Vue Router 4, Pinia 3 조합을 lockfile로 고정했습니다.
+- Vue Router 5의 transitive Babel 8이 Node.js 22.18+를 요구해, Node.js 20 계약과 일치하는 Vue Router 4.6으로 조정했습니다.
+- 정적 app shell, root와 Not Found route, online/offline store와 PWA 상태 panel을 구현했습니다.
+- PWA update는 자동 reload하지 않고 명시적인 사용자 확인을 요구합니다.
+- 공식 `@vite-pwa/assets-generator`로 SVG 원본에서 192/512/maskable icon을 재생성할 수 있습니다.
+- ESLint, Oxlint, Prettier, TypeScript, Vitest 5개, production build와 PWA artifact 검증이 통과했습니다.
+- B01은 production reverse proxy와 frontend container를 포함하지 않으며, 배포 통합은 responsive shell 이후 별도 운영 단위로 진행합니다.

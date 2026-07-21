@@ -143,9 +143,17 @@
 
 ### B01 PWA project skeleton
 
+- 상태: 완료 (2026-07-21)
 - 범위: Vue 3, TypeScript, router, Pinia, build/test/lint
 - 완료 기준: installable shell과 offline fallback 표시
 - 비범위: offline editing
+
+구현 결과:
+
+- Vue 3, TypeScript, Vite, Vue Router와 Pinia application foundation을 구성했다.
+- app shell precache, install manifest, PWA icon과 사용자 확인 update prompt를 추가했다.
+- online/offline 상태를 텍스트로 노출하고 API response는 cache하지 않는다.
+- lint, format, type check, component/store test와 production PWA build를 검증했다.
 
 ### B02 Responsive app shell
 
@@ -244,8 +252,8 @@
 5. A05 Create file — 완료
 6. A06 Atomic update with conflict detection — 완료
 7. A10 Lazy tree endpoint — 완료
-8. B01 PWA project skeleton — 다음 단계
-9. B02 Responsive app shell
+8. B01 PWA project skeleton — 완료
+9. B02 Responsive app shell — 다음 단계
 10. B03 Tree state model
 11. B04 Lazy tree UI
 12. B05 Open file flow

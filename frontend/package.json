@@ -1,0 +1,56 @@
+{
+  "name": "knowledgeos-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "run-p type-check \"build-only {@}\" --",
+    "preview": "vite preview",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "build-only": "vite build",
+    "type-check": "vue-tsc --build",
+    "lint": "run-p lint:oxlint lint:eslint format:check",
+    "lint:oxlint": "oxlint . --deny-warnings",
+    "lint:eslint": "eslint . --max-warnings 0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "generate:pwa-assets": "pwa-assets-generator --preset minimal-2023 public/icons/knowledgeos.svg",
+    "verify:pwa": "node scripts/verify-pwa.mjs",
+    "validate": "run-s lint type-check test:unit build verify:pwa"
+  },
+  "dependencies": {
+    "pinia": "^3.0.4",
+    "vue": "^3.5.28",
+    "vue-router": "^4.6.4"
+  },
+  "devDependencies": {
+    "@vite-pwa/assets-generator": "^1.0.2",
+    "@tsconfig/node20": "^20.1.6",
+    "@types/jsdom": "^27.0.0",
+    "@types/node": "^20.19.0",
+    "@vitejs/plugin-vue": "^6.0.4",
+    "@vitest/eslint-plugin": "^1.6.9",
+    "@vue/eslint-config-typescript": "^14.6.0",
+    "@vue/test-utils": "^2.4.6",
+    "@vue/tsconfig": "^0.8.1",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-oxlint": "~1.46.0",
+    "eslint-plugin-vue": "~10.8.0",
+    "jiti": "^2.6.1",
+    "jsdom": "^28.1.0",
+    "npm-run-all2": "^8.0.4",
+    "oxlint": "~1.47.0",
+    "prettier": "3.8.1",
+    "typescript": "~5.9.3",
+    "vite": "^7.3.1",
+    "vite-plugin-pwa": "^1.3.0",
+    "vitest": "^4.0.18",
+    "vue-tsc": "^3.2.4"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  }
+}
