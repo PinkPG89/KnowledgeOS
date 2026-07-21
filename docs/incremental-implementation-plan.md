@@ -172,9 +172,17 @@
 
 ### B03 Tree state model
 
+- 상태: 완료 (2026-07-22)
 - 범위: `nodesByPath`, children, loading, loaded, expanded, selected
 - 참고: Many Notes `vaultTree.ts`
 - 완료 기준: 중복 load 방지, sort, collapse/expand unit test 통과
+
+구현 결과:
+
+- canonical relative path 기반 node projection과 directory별 lazy state를 구현했다.
+- HTTP parsing과 Pinia 상태 전이를 분리하고 API JSON을 runtime validation한다.
+- 진행 중 Promise 공유와 loaded 상태 확인으로 동일 directory 중복 요청을 방지한다.
+- directory-first Unicode ordering, collapse/expand, failure/retry와 selected node를 unit test로 검증했다.
 
 ### B04 Lazy tree UI
 
@@ -263,8 +271,8 @@
 7. A10 Lazy tree endpoint — 완료
 8. B01 PWA project skeleton — 완료
 9. B02 Responsive app shell — 완료
-10. B03 Tree state model — 다음 단계
-11. B04 Lazy tree UI
+10. B03 Tree state model — 완료
+11. B04 Lazy tree UI — 다음 단계
 12. B05 Open file flow
 
 첫 milestone은 `knowledge/`를 안전하게 탐색하고 하나의 Markdown 파일을 읽는 vertical slice다. 쓰기 기능은 path policy와 read contract가 검증된 뒤 추가한다.
