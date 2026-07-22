@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import NetworkStatus from '@/components/NetworkStatus.vue'
+import FileTreePanel from '@/components/tree/FileTreePanel.vue'
 import { useResponsiveLayout } from '@/composables/useResponsiveLayout'
 import { getBrowserStorage } from '@/utils/browserStorage'
 
@@ -83,11 +84,7 @@ function handleEscape(event: KeyboardEvent) {
             <span aria-hidden="true">×</span>
           </button>
         </div>
-        <div class="panel-placeholder">
-          <span aria-hidden="true">⌘</span>
-          <strong>Vault tree 준비</strong>
-          <p>B03에서 lazy tree 상태를 연결합니다.</p>
-        </div>
+        <FileTreePanel />
       </aside>
 
       <main class="editor-pane" aria-labelledby="editor-title">
@@ -297,38 +294,6 @@ function handleEscape(event: KeyboardEvent) {
 .workspace-panel__header h2 {
   margin-top: 0.25rem;
   font-size: 1rem;
-}
-
-.panel-placeholder {
-  display: grid;
-  min-height: 15rem;
-  align-content: center;
-  justify-items: center;
-  padding: 1.5rem;
-  color: var(--color-text-muted);
-  text-align: center;
-}
-
-.panel-placeholder > span {
-  display: grid;
-  width: 3rem;
-  height: 3rem;
-  margin-bottom: 1rem;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--color-surface-muted);
-  color: var(--color-accent);
-}
-
-.panel-placeholder strong {
-  color: var(--color-text);
-  font-size: 0.9rem;
-}
-
-.panel-placeholder p {
-  margin: 0.4rem 0 0;
-  font-size: 0.8rem;
-  line-height: 1.5;
 }
 
 .editor-pane {

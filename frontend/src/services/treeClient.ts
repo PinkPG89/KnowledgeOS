@@ -18,7 +18,9 @@ export class TreeClientError extends Error {
 }
 
 export class HttpTreeClient implements TreeClient {
-  constructor(private readonly fetcher: Fetcher = globalThis.fetch.bind(globalThis)) {}
+  constructor(
+    private readonly fetcher: Fetcher = (...arguments_) => globalThis.fetch(...arguments_),
+  ) {}
 
   async listDirectory(path: string): Promise<TreeListing> {
     const url = new URL('/api/tree', globalThis.location.origin)

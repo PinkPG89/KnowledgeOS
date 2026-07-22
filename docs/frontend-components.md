@@ -182,7 +182,9 @@ Client state:
 - B01 구현 기준은 [B01 Vue 3 PWA Skeleton Plan](b01-pwa-skeleton-plan.md)을 따릅니다.
 - B02 구현 기준은 [B02 Responsive App Shell Plan](b02-responsive-app-shell-plan.md)을 따릅니다.
 - B03 구현 기준은 [B03 Tree State Model Plan](b03-tree-state-model-plan.md)을 따릅니다.
+- B04 구현 기준은 [B04 Lazy Tree UI Plan](b04-lazy-tree-ui-plan.md)을 따릅니다.
 - PWA update는 editor draft 보호를 위해 자동 reload 대신 사용자 확인 prompt를 사용합니다.
 - B01과 B02의 styling은 CSS custom properties와 component-scoped CSS로 시작합니다.
 - Desktop panel preference만 local storage에 보존하며 mobile drawer 상태는 일시 상태로 유지합니다.
 - Tree API response는 runtime validation 후 canonical relative path 기반 client projection으로 관리합니다.
+- Tree UI는 visible node projection과 roving tabindex를 사용하며 file open은 B05에서 연결합니다.

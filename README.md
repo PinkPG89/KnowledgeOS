@@ -54,7 +54,7 @@ KnowledgeOS/
 
 Docker 개발 실행 방법은 [Docker Development Runtime](docs/docker.md)을 참고합니다.
 
-현재 backend는 application bootstrap, `/api/health`, canonical path 검증, 단일 활성 Vault containment, UTF-8 Markdown 읽기, 안전한 생성·수정과 lazy Tree API를 제공합니다. Frontend는 Vue 3 PWA 기반, responsive shell과 canonical path 기반 lazy tree 상태 모델까지 구성됐으며 다음 단계는 B04 Lazy Tree UI입니다.
+현재 backend는 application bootstrap, `/api/health`, canonical path 검증, 단일 활성 Vault containment, UTF-8 Markdown 읽기, 안전한 생성·수정과 lazy Tree API를 제공합니다. Frontend는 responsive shell, lazy tree 상태 모델과 keyboard·touch file tree UI까지 구성됐으며 다음 단계는 B05 Open File Flow입니다.
 
 ---
 

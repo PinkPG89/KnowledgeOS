@@ -9,4 +9,14 @@ beforeEach(() => {
     'matchMedia',
     vi.fn(() => controller.mediaQuery),
   )
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(
+      async () =>
+        new Response(JSON.stringify({ path: '', entries: [] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+    ),
+  )
 })

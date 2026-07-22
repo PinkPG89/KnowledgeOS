@@ -28,6 +28,7 @@
 - [x] Vue 3 installable PWA foundation과 offline shell
 - [x] Desktop 3영역과 mobile drawer responsive shell
 - [x] Lazy tree frontend state model과 API boundary validation
+- [x] Keyboard와 touch를 지원하는 lazy file tree UI
 - [x] KnowledgeOS 핵심 아키텍처 확정
 - [x] 디렉터리 구조 확정
 - API 초안과 구현 상태 동기화
@@ -51,7 +52,7 @@
 - [x] 설치 가능한 PWA foundation
 - [x] 모바일 responsive app shell
 - [x] 파일 트리 backend API
-- 파일 트리 frontend UI
+- [x] 파일 트리 frontend UI
 - Markdown editor
 - 파일 읽기/저장
 - 파일 생성/삭제/이름변경

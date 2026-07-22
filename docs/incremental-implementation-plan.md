@@ -186,8 +186,17 @@
 
 ### B04 Lazy tree UI
 
+- 상태: 완료 (2026-07-22)
 - 범위: root load, folder expand, loading/error/retry
 - 완료 기준: keyboard 탐색과 mobile touch target 검증
+
+구현 결과:
+
+- responsive navigation panel에 lazy `FileTreePanel`을 연결했다.
+- root와 nested loading, error, retry, empty 상태를 구현했다.
+- roving tabindex와 Arrow, Home, End, Enter, Space keyboard interaction을 추가했다.
+- tree ARIA metadata와 44px touch target을 component test로 검증했다.
+- Vite development proxy와 실제 Rust Tree API 연결 smoke test를 통과했다.
 
 ### B05 Open file flow
 
@@ -272,8 +281,8 @@
 8. B01 PWA project skeleton — 완료
 9. B02 Responsive app shell — 완료
 10. B03 Tree state model — 완료
-11. B04 Lazy tree UI — 다음 단계
-12. B05 Open file flow
+11. B04 Lazy tree UI — 완료
+12. B05 Open file flow — 다음 단계
 
 첫 milestone은 `knowledge/`를 안전하게 탐색하고 하나의 Markdown 파일을 읽는 vertical slice다. 쓰기 기능은 path policy와 read contract가 검증된 뒤 추가한다.
 
