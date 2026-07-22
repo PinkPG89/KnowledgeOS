@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import NetworkStatus from '@/components/NetworkStatus.vue'
+import MarkdownDocumentPane from '@/components/editor/MarkdownDocumentPane.vue'
 import FileTreePanel from '@/components/tree/FileTreePanel.vue'
 import { useResponsiveLayout } from '@/composables/useResponsiveLayout'
 import { getBrowserStorage } from '@/utils/browserStorage'
 
 const layout = useResponsiveLayout()
+const emit = defineEmits<{ openFile: [path: string] }>()
 
 function toggleNavigation() {
   layout.toggleNavigation(getBrowserStorage())
@@ -84,23 +86,11 @@ function handleEscape(event: KeyboardEvent) {
             <span aria-hidden="true">×</span>
           </button>
         </div>
-        <FileTreePanel />
+        <FileTreePanel @open-file="emit('openFile', $event)" />
       </aside>
 
       <main class="editor-pane" aria-labelledby="editor-title">
-        <div class="editor-pane__path" aria-label="현재 문서 경로">knowledge / 시작하기.md</div>
-        <section class="editor-placeholder">
-          <p class="editor-placeholder__eyebrow">B02 · Responsive Shell</p>
-          <h1 id="editor-title">집중할 수 있는 Markdown 작업공간</h1>
-          <p>
-            데스크톱에서는 탐색기와 파일 정보를 함께 보고, 모바일에서는 현재 문서에 화면 전체를
-            사용합니다.
-          </p>
-          <div class="editor-placeholder__surface" aria-label="Markdown editor 준비 영역">
-            <span>Editor</span>
-            <strong>파일을 선택하면 이곳에서 편집합니다.</strong>
-          </div>
-        </section>
+        <MarkdownDocumentPane />
       </main>
 
       <aside
@@ -303,77 +293,6 @@ function handleEscape(event: KeyboardEvent) {
     var(--color-background);
 }
 
-.editor-pane__path {
-  position: sticky;
-  z-index: 2;
-  top: 0;
-  overflow: hidden;
-  padding: 0.7rem 1rem;
-  border-bottom: 1px solid var(--color-border);
-  background: color-mix(in srgb, var(--color-background) 92%, transparent);
-  color: var(--color-text-muted);
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 0.75rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  backdrop-filter: blur(0.75rem);
-}
-
-.editor-placeholder {
-  width: min(48rem, 100%);
-  margin: 0 auto;
-  padding: clamp(2.5rem, 7vw, 6rem) clamp(1rem, 5vw, 4rem);
-}
-
-.editor-placeholder__eyebrow {
-  margin: 0 0 0.9rem;
-  color: var(--color-accent);
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.editor-placeholder h1 {
-  max-width: 38rem;
-  margin: 0;
-  font-size: clamp(2rem, 5vw, 4.5rem);
-  letter-spacing: -0.055em;
-  line-height: 1.02;
-}
-
-.editor-placeholder > p:not(.editor-placeholder__eyebrow) {
-  max-width: 38rem;
-  margin: 1.25rem 0 0;
-  color: var(--color-text-muted);
-  line-height: 1.75;
-}
-
-.editor-placeholder__surface {
-  display: grid;
-  min-height: 14rem;
-  align-content: center;
-  margin-top: 3rem;
-  padding: 1.5rem;
-  border: 1px dashed var(--color-border-strong);
-  border-radius: 1rem;
-  background: color-mix(in srgb, var(--color-surface) 70%, transparent);
-  color: var(--color-text-muted);
-  text-align: center;
-}
-
-.editor-placeholder__surface span {
-  color: var(--color-accent);
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 0.75rem;
-}
-
-.editor-placeholder__surface strong {
-  margin-top: 0.5rem;
-  color: var(--color-text);
-  font-size: 0.92rem;
-}
-
 .metadata-list {
   margin: 0;
   padding: 0.5rem 1rem;
@@ -451,10 +370,6 @@ function handleEscape(event: KeyboardEvent) {
 
   .editor-pane {
     height: 100%;
-  }
-
-  .editor-placeholder {
-    padding-top: clamp(2.5rem, 12vw, 5rem);
   }
 }
 

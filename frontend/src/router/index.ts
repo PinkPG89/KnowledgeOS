@@ -7,6 +7,11 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/views/WorkspaceView.vue'),
   },
   {
+    path: '/files/:path(.*)',
+    name: 'file',
+    component: () => import('@/views/WorkspaceView.vue'),
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
     component: () => import('@/views/NotFoundView.vue'),

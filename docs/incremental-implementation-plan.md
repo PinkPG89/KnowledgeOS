@@ -200,9 +200,18 @@
 
 ### B05 Open file flow
 
+- 상태: 완료 (2026-07-22)
 - 범위: path route, file fetch, selected tree sync, mobile drawer close
 - 참고: Many Notes file open behavior
 - 완료 기준: deep link 새로고침과 mobile drawer test 통과
+
+구현 결과:
+
+- percent-encoded relative path 기반 `/files/:path` deep link를 추가했다.
+- Markdown Read API response를 runtime validation하고 request abort와 stale response 차단을 구현했다.
+- deep link ancestor를 lazy load해 tree expanded/selected 상태를 복원한다.
+- mobile file open 시 route 이동 후 navigation drawer를 닫는다.
+- read-only Markdown surface와 loading, error, retry 상태를 제공한다.
 
 ### B06 CodeMirror Markdown editor spike
 
@@ -282,7 +291,8 @@
 9. B02 Responsive app shell — 완료
 10. B03 Tree state model — 완료
 11. B04 Lazy tree UI — 완료
-12. B05 Open file flow — 다음 단계
+12. B05 Open file flow — 완료
+13. B06 CodeMirror Markdown editor spike — 다음 단계
 
 첫 milestone은 `knowledge/`를 안전하게 탐색하고 하나의 Markdown 파일을 읽는 vertical slice다. 쓰기 기능은 path policy와 read contract가 검증된 뒤 추가한다.
 

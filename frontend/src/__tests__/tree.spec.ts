@@ -145,4 +145,23 @@ describe('tree store', () => {
     expect(store.selectNode(null)).toBe(true)
     expect(store.selectedPath).toBeNull()
   })
+
+  it('reveals every ancestor of a deep-linked file', async () => {
+    const listDirectory = vi.fn(async (path: string) => {
+      if (path === '') return { path, entries: [directory('projects')] }
+      if (path === 'projects') {
+        return { path, entries: [directory('agent', 'projects/agent')] }
+      }
+      return { path, entries: [file('note.md', 'projects/agent/note.md')] }
+    })
+    const store = useTreeStore()
+
+    const result = await store.revealPath('projects/agent/note.md', clientWith(listDirectory))
+
+    expect(result.ok).toBe(true)
+    expect(listDirectory).toHaveBeenCalledTimes(3)
+    expect(store.directoriesByPath.projects?.expanded).toBe(true)
+    expect(store.directoriesByPath['projects/agent']?.expanded).toBe(true)
+    expect(store.selectedPath).toBe('projects/agent/note.md')
+  })
 })

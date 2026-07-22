@@ -20,6 +20,7 @@ interface VisibleTreeItem {
 }
 
 const props = defineProps<{ client?: TreeClient }>()
+const emit = defineEmits<{ openFile: [path: string] }>()
 const tree = useTreeStore()
 const itemElements = new Map<string, HTMLElement>()
 const focusedPath = defineModel<string | null>('focusedPath', { default: null })
@@ -104,6 +105,7 @@ async function activateItem(item: VisibleTreeItem) {
   }
 
   tree.selectNode(item.node.path)
+  emit('openFile', item.node.path)
 }
 
 async function retryDirectory(path: string) {

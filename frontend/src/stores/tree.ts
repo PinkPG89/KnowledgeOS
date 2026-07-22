@@ -3,6 +3,7 @@ import { reactive, ref } from 'vue'
 
 import type { TreeDirectoryState, TreeLoadError, TreeLoadResult, TreeNode } from '@/models/tree'
 import { TreeClientError, treeClient, type TreeClient } from '@/services/treeClient'
+import { isMarkdownPath } from '@/utils/canonicalPath'
 
 export const ROOT_DIRECTORY_PATH = ''
 
@@ -12,6 +13,7 @@ export const useTreeStore = defineStore('tree', () => {
     [ROOT_DIRECTORY_PATH]: createDirectoryState(true),
   })
   const selectedPath = ref<string | null>(null)
+  let revealGeneration = 0
 
   // Promise는 UI 상태가 아니므로 Vue reactive graph 밖에서 관리합니다.
   // 같은 path를 동시에 load하면 모든 caller가 하나의 작업 완료를 기다립니다.
@@ -99,9 +101,45 @@ export const useTreeStore = defineStore('tree', () => {
   }
 
   function selectNode(path: string | null): boolean {
+    if (path === null) revealGeneration += 1
     if (path !== null && !nodesByPath[path]) return false
     selectedPath.value = path
     return true
+  }
+
+  async function revealPath(
+    path: string,
+    client: TreeClient = treeClient,
+  ): Promise<TreeLoadResult> {
+    if (!isMarkdownPath(path))
+      return treeOperationError('invalid_path', '올바른 Markdown 경로가 아닙니다.')
+
+    revealGeneration += 1
+    const generation = revealGeneration
+    const rootResult = await loadDirectory(ROOT_DIRECTORY_PATH, client)
+    if (!rootResult.ok) return rootResult
+    if (generation !== revealGeneration) return revealSuperseded()
+
+    const segments = path.split('/')
+    let ancestorPath = ''
+
+    for (const segment of segments.slice(0, -1)) {
+      ancestorPath = ancestorPath ? `${ancestorPath}/${segment}` : segment
+      const ancestor = nodesByPath[ancestorPath]
+      if (ancestor?.kind !== 'directory') {
+        return treeOperationError('tree_path_not_found', '파일의 상위 폴더를 찾을 수 없습니다.')
+      }
+
+      directoriesByPath[ancestorPath]!.expanded = true
+      const result = await loadDirectory(ancestorPath, client)
+      if (!result.ok) return result
+      if (generation !== revealGeneration) return revealSuperseded()
+    }
+
+    if (!selectNode(path)) {
+      return treeOperationError('tree_path_not_found', '파일 트리에서 문서를 찾을 수 없습니다.')
+    }
+    return { ok: true }
   }
 
   function ensureDirectoryState(path: string): TreeDirectoryState {
@@ -121,6 +159,7 @@ export const useTreeStore = defineStore('tree', () => {
     refreshDirectory,
     toggleDirectory,
     selectNode,
+    revealPath,
   }
 })
 
@@ -167,4 +206,12 @@ function toTreeLoadError(error: unknown): TreeLoadError {
     message: '파일 트리를 불러오지 못했습니다.',
     retryable: true,
   }
+}
+
+function treeOperationError(code: string, message: string): TreeLoadResult {
+  return { ok: false, error: { code, message, retryable: false } }
+}
+
+function revealSuperseded(): TreeLoadResult {
+  return treeOperationError('tree_reveal_superseded', '새로운 파일 탐색 요청으로 대체되었습니다.')
 }
