@@ -279,6 +279,13 @@
 
 ## Operations Gate
 
+### O00 Obsidian Vault migration
+
+- 범위: application metadata 분리, 비파괴 initial copy, checksum 검증, write freeze와 final cutover
+- 진행 상태: `/data/AppData/knowledgeos/vault` initial copy와 read-only API 검증 완료, production cutover 대기
+- 절차: [Obsidian Vault Migration Plan](obsidian-vault-migration-plan.md)
+- 완료 기준: final sync 후 KnowledgeOS Compose mount 전환과 rollback smoke test 통과
+
 ### O01 SilverBullet conditional decommission
 
 - 범위: feature parity 확인, backup/restore rehearsal, NPM cutover, rollback window와 container 퇴역
