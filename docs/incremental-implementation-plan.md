@@ -277,6 +277,16 @@
 - 범위: local draft, server content, base content 비교 UI
 - 완료 기준: overwrite 없이 사용자 선택으로만 해결
 
+## Operations Gate
+
+### O01 SilverBullet conditional decommission
+
+- 범위: feature parity 확인, backup/restore rehearsal, NPM cutover, rollback window와 container 퇴역
+- 선행 조건: B06–B08, A07–A09, C01–C05, D01–D03와 운영 success gate 완료
+- 데이터 정책: `/data/AppData/obsidian`은 제거 대상이 아니며 SilverBullet 전용 DB도 별도 승인 전까지 보존
+- 절차: [SilverBullet Conditional Decommission Plan](silverbullet-decommission-plan.md)
+- 완료 기준: 최소 14일 KnowledgeOS soak와 rollback window 종료 후 SilverBullet container만 안전하게 제거
+
 ## 우선 실행 순서
 
 다음 순서는 세로 slice보다 기반 위험을 먼저 제거한다.
