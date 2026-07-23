@@ -218,6 +218,7 @@
 - 범위: large document, Korean IME, iOS composition, toolbar prototype
 - 완료 기준: 실기기 검증 기록과 editor 채택 ADR
 - 비범위: production save integration
+- 진행 상태: 구현과 자동화 검증 완료, iPhone/Android 실기기 검증 대기
 
 ### B07 Editor save state machine
 
@@ -292,7 +293,7 @@
 10. B03 Tree state model — 완료
 11. B04 Lazy tree UI — 완료
 12. B05 Open file flow — 완료
-13. B06 CodeMirror Markdown editor spike — 다음 단계
+13. B06 CodeMirror Markdown editor spike — 실기기 검증 대기
 
 첫 milestone은 `knowledge/`를 안전하게 탐색하고 하나의 Markdown 파일을 읽는 vertical slice다. 쓰기 기능은 path policy와 read contract가 검증된 뒤 추가한다.
 

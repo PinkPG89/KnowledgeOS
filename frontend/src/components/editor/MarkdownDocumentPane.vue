@@ -1,7 +1,21 @@
 <script setup lang="ts">
+import { ref, watch } from 'vue'
+
+import MarkdownEditorSpike from '@/components/editor/MarkdownEditorSpike.vue'
 import { useDocumentStore } from '@/stores/document'
 
 const documentState = useDocumentStore()
+const spikeDraft = ref('')
+const compositionActive = ref(false)
+
+watch(
+  () => documentState.document,
+  (document) => {
+    spikeDraft.value = document?.content ?? ''
+    compositionActive.value = false
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
@@ -43,7 +57,7 @@ const documentState = useDocumentStore()
       <article class="document-content" aria-labelledby="editor-title">
         <header class="document-content__header">
           <div>
-            <p>Read-only Markdown</p>
+            <p>CodeMirror 6 Spike</p>
             <h1 id="editor-title">
               {{ documentState.document.path.split('/').slice(-1)[0] }}
             </h1>
@@ -59,7 +73,15 @@ const documentState = useDocumentStore()
             </div>
           </dl>
         </header>
-        <pre>{{ documentState.document.content }}</pre>
+        <p class="document-content__notice" role="status">
+          실험용 편집기 · 변경 내용은 아직 저장되지 않습니다.
+          <span v-if="compositionActive">한글 입력 조합 중</span>
+        </p>
+        <MarkdownEditorSpike
+          v-model="spikeDraft"
+          :aria-label="`${documentState.document.path} Markdown 편집기`"
+          @composition-change="compositionActive = $event"
+        />
         <footer>Hash · {{ documentState.document.hash }}</footer>
       </article>
     </template>
@@ -191,18 +213,29 @@ const documentState = useDocumentStore()
   color: var(--color-text);
 }
 
-.document-content pre {
-  margin: 2rem 0;
-  overflow-wrap: anywhere;
-  color: var(--color-text);
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-  font-size: 0.9rem;
-  line-height: 1.75;
-  white-space: pre-wrap;
+.document-content__notice {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 1rem 0;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--color-warning) 35%, var(--color-border));
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--color-warning) 8%, var(--color-surface));
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.document-content__notice span {
+  flex: 0 0 auto;
+  color: var(--color-warning);
+  font-weight: 800;
 }
 
 .document-content footer {
   overflow: hidden;
+  margin-top: 1rem;
   padding-top: 1rem;
   border-top: 1px solid var(--color-border);
   color: var(--color-text-muted);
@@ -219,13 +252,30 @@ const documentState = useDocumentStore()
 }
 
 @media (max-width: 40rem) {
+  .document-content {
+    padding-right: 0;
+    padding-left: 0;
+  }
+
   .document-content__header {
     display: grid;
     align-items: start;
+    padding-right: 1rem;
+    padding-left: 1rem;
   }
 
   .document-content__header dl {
     width: 100%;
+  }
+
+  .document-content__notice {
+    margin-right: 1rem;
+    margin-left: 1rem;
+  }
+
+  .document-content footer {
+    margin-right: 1rem;
+    margin-left: 1rem;
   }
 }
 

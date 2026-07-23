@@ -21,15 +21,17 @@
     "validate": "run-s lint type-check test:unit build verify:pwa"
   },
   "dependencies": {
+    "@codemirror/lang-markdown": "^6.5.1",
+    "codemirror": "^6.0.2",
     "pinia": "^3.0.4",
     "vue": "^3.5.28",
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
-    "@vite-pwa/assets-generator": "^1.0.2",
     "@tsconfig/node20": "^20.1.6",
     "@types/jsdom": "^27.0.0",
     "@types/node": "^20.19.0",
+    "@vite-pwa/assets-generator": "^1.0.2",
     "@vitejs/plugin-vue": "^6.0.4",
     "@vitest/eslint-plugin": "^1.6.9",
     "@vue/eslint-config-typescript": "^14.6.0",
@@ -52,5 +54,8 @@
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
+  },
+  "overrides": {
+    "sharp": "0.35.3"
   }
 }

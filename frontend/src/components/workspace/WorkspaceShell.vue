@@ -119,7 +119,7 @@ function handleEscape(event: KeyboardEvent) {
         <dl class="metadata-list">
           <div>
             <dt>상태</dt>
-            <dd>읽기 전용 예시</dd>
+            <dd>편집기 검증 중</dd>
           </div>
           <div>
             <dt>형식</dt>
@@ -127,7 +127,7 @@ function handleEscape(event: KeyboardEvent) {
           </div>
           <div>
             <dt>저장</dt>
-            <dd>Vault 원본 파일</dd>
+            <dd>미연결 · B07 예정</dd>
           </div>
         </dl>
       </aside>
