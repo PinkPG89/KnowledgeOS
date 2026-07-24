@@ -88,6 +88,10 @@ describe('open file flow', () => {
     await flushPromises()
 
     expect(router.currentRoute.value.params.path).toBe('프로젝트/첫 메모.md')
+    expect(wrapper.get('.markdown-preview h1').text()).toBe('첫 메모')
+    await wrapper.get('button[aria-pressed="false"]').trigger('click')
+    await vi.dynamicImportSettled()
+    await flushPromises()
     expect(wrapper.get('[role="textbox"]').text()).toBe(content.trim())
     expect(wrapper.get('[aria-selected="true"]').text()).toContain('첫 메모.md')
   })
@@ -123,7 +127,7 @@ describe('open file flow', () => {
     expect(router.currentRoute.value).toMatchObject({ name: 'file' })
     expect(router.currentRoute.value.params.path).toBe('note.md')
     expect(wrapper.get('#workspace-navigation').attributes('aria-hidden')).toBe('true')
-    expect(wrapper.get('[role="textbox"]').text()).toBe(content.trim())
+    expect(wrapper.get('.markdown-preview h1').text()).toBe('Note')
   })
 
   it('renders a retryable read error and clears the document on the root route', async () => {
@@ -162,7 +166,7 @@ describe('open file flow', () => {
     expect(wrapper.get('.document-state[role="alert"]').text()).toContain('Temporary failure')
     await wrapper.get('.document-state[role="alert"] button').trigger('click')
     await flushPromises()
-    expect(wrapper.get('[role="textbox"]').text()).toBe(content)
+    expect(wrapper.get('.markdown-preview').text()).toBe(content)
 
     await router.push('/')
     await flushPromises()

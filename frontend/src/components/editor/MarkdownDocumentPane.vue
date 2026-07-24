@@ -1,12 +1,16 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { defineAsyncComponent, ref, watch } from 'vue'
 
-import MarkdownEditorSpike from '@/components/editor/MarkdownEditorSpike.vue'
+import MarkdownPreview from '@/components/editor/MarkdownPreview.vue'
 import { useDocumentStore } from '@/stores/document'
 
+const MarkdownEditorSpike = defineAsyncComponent(
+  () => import('@/components/editor/MarkdownEditorSpike.vue'),
+)
 const documentState = useDocumentStore()
 const spikeDraft = ref('')
 const compositionActive = ref(false)
+const documentMode = ref<'edit' | 'preview'>('preview')
 
 watch(
   () => documentState.document,
@@ -73,15 +77,38 @@ watch(
             </div>
           </dl>
         </header>
-        <p class="document-content__notice" role="status">
-          실험용 편집기 · 변경 내용은 아직 저장되지 않습니다.
-          <span v-if="compositionActive">한글 입력 조합 중</span>
-        </p>
+        <div class="document-content__controls">
+          <p class="document-content__notice" role="status">
+            <template v-if="documentMode === 'edit'">
+              실험용 편집기 · 변경 내용은 아직 저장되지 않습니다.
+              <span v-if="compositionActive">한글 입력 조합 중</span>
+            </template>
+            <template v-else>Markdown 렌더링 미리보기</template>
+          </p>
+          <div class="document-mode" role="group" aria-label="문서 표시 방식">
+            <button
+              type="button"
+              :aria-pressed="documentMode === 'preview'"
+              @click="documentMode = 'preview'"
+            >
+              미리보기
+            </button>
+            <button
+              type="button"
+              :aria-pressed="documentMode === 'edit'"
+              @click="documentMode = 'edit'"
+            >
+              편집
+            </button>
+          </div>
+        </div>
         <MarkdownEditorSpike
+          v-if="documentMode === 'edit'"
           v-model="spikeDraft"
           :aria-label="`${documentState.document.path} Markdown 편집기`"
           @composition-change="compositionActive = $event"
         />
+        <MarkdownPreview v-else :source="spikeDraft" />
         <footer>Hash · {{ documentState.document.hash }}</footer>
       </article>
     </template>
@@ -213,11 +240,20 @@ watch(
   color: var(--color-text);
 }
 
-.document-content__notice {
+.document-content__controls {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
   margin: 1rem 0;
+}
+
+.document-content__notice {
+  display: flex;
+  flex: 1 1 auto;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0;
   padding: 0.7rem 0.85rem;
   border: 1px solid color-mix(in srgb, var(--color-warning) 35%, var(--color-border));
   border-radius: 0.75rem;
@@ -231,6 +267,34 @@ watch(
   flex: 0 0 auto;
   color: var(--color-warning);
   font-weight: 800;
+}
+
+.document-mode {
+  display: flex;
+  flex: 0 0 auto;
+  padding: 0.2rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  background: var(--color-surface-muted);
+}
+
+.document-mode button {
+  min-height: 2.4rem;
+  padding: 0 0.8rem;
+  border: 0;
+  border-radius: 0.55rem;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.document-mode button[aria-pressed='true'] {
+  background: var(--color-surface);
+  color: var(--color-accent);
+  box-shadow: 0 1px 3px rgb(23 33 26 / 12%);
 }
 
 .document-content footer {
@@ -268,9 +332,19 @@ watch(
     width: 100%;
   }
 
-  .document-content__notice {
+  .document-content__controls {
+    display: grid;
     margin-right: 1rem;
     margin-left: 1rem;
+  }
+
+  .document-mode {
+    width: 100%;
+  }
+
+  .document-mode button {
+    flex: 1 1 50%;
+    min-height: 2.75rem;
   }
 
   .document-content footer {
