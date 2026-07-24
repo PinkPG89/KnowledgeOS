@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 import App from '@/App.vue'
 import { createAppRouter } from '@/router'
+import { useDocumentStore } from '@/stores/document'
 
 import { createMatchMediaController } from './matchMedia'
 
@@ -34,13 +35,14 @@ async function mountAppAt(path: string, desktop = true) {
   const router = createAppRouter(createMemoryHistory())
   await router.push(path)
   await router.isReady()
+  const pinia = createPinia()
 
   const wrapper = mount(App, {
     attachTo: document.body,
-    global: { plugins: [createPinia(), router] },
+    global: { plugins: [pinia, router] },
   })
 
-  return { router, wrapper }
+  return { pinia, router, wrapper }
 }
 
 describe('open file flow', () => {
@@ -172,5 +174,90 @@ describe('open file flow', () => {
     await flushPromises()
     expect(wrapper.get('.document-state').text()).toContain('파일 트리에서 Markdown 문서를 선택')
     expect(wrapper.find('[aria-selected="true"]').exists()).toBe(false)
+  })
+
+  it('shows a conflict without replacing the local draft', async () => {
+    const content = '# Original\n'
+    const currentHash = `sha256:${'c'.repeat(64)}`
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input)
+        if (url === '/api/tree') {
+          return jsonResponse({
+            path: '',
+            entries: [treeEntry('file', 'note.md', 'note.md', content.length)],
+          })
+        }
+        if (init?.method === 'PUT') {
+          return jsonResponse(
+            {
+              error: {
+                code: 'write_conflict',
+                message: 'Markdown file changed',
+                details: { path: 'note.md', current_hash: currentHash },
+              },
+            },
+            409,
+          )
+        }
+        return jsonResponse({
+          path: 'note.md',
+          content,
+          hash,
+          size: content.length,
+          modified_at: modifiedAt,
+        })
+      }),
+    )
+    const { pinia, wrapper } = await mountAppAt('/files/note.md')
+    await flushPromises()
+    const store = useDocumentStore(pinia)
+    store.setDraft('# Local draft\n')
+    await store.save()
+    await flushPromises()
+
+    expect(wrapper.get('.save-feedback[role="alert"]').text()).toContain(
+      '서버의 문서가 먼저 변경되었습니다.',
+    )
+    expect(wrapper.get('.markdown-preview h1').text()).toBe('Local draft')
+    expect(store.saveStatus).toBe('conflict')
+    expect(store.draft).toBe('# Local draft\n')
+  })
+
+  it('blocks internal navigation when the user keeps an unsaved draft', async () => {
+    const content = '# Original\n'
+    vi.stubGlobal(
+      'confirm',
+      vi.fn(() => false),
+    )
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        if (String(input) === '/api/tree') {
+          return jsonResponse({
+            path: '',
+            entries: [treeEntry('file', 'note.md', 'note.md', content.length)],
+          })
+        }
+        return jsonResponse({
+          path: 'note.md',
+          content,
+          hash,
+          size: content.length,
+          modified_at: modifiedAt,
+        })
+      }),
+    )
+    const { pinia, router } = await mountAppAt('/files/note.md')
+    await flushPromises()
+    const store = useDocumentStore(pinia)
+    store.setDraft('# Unsaved\n')
+
+    await router.push('/files/other.md')
+
+    expect(confirm).toHaveBeenCalledOnce()
+    expect(router.currentRoute.value.params.path).toBe('note.md')
+    expect(store.draft).toBe('# Unsaved\n')
   })
 })

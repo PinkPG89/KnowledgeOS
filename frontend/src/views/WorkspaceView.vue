@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute, useRouter } from 'vue-router'
 
 import WorkspaceShell from '@/components/workspace/WorkspaceShell.vue'
 import { useDocumentStore } from '@/stores/document'
@@ -19,6 +19,18 @@ const routePath = computed(() => {
   if (Array.isArray(path) && path.length > 0) return path.join('/')
   return null
 })
+
+function confirmDocumentChange() {
+  if (!documentState.hasUnsavedChanges) return true
+  return window.confirm('저장하지 않은 변경이 있습니다. 현재 초안을 버리고 이동하시겠습니까?')
+}
+
+onBeforeRouteUpdate((to, from) => {
+  if (to.params.path === from.params.path) return true
+  return confirmDocumentChange()
+})
+
+onBeforeRouteLeave(() => confirmDocumentChange())
 
 watch(
   routePath,

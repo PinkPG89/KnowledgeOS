@@ -224,6 +224,16 @@
 
 - 범위: clean, dirty, saving, conflict, error
 - 완료 기준: double save 방지, retry, conflict component test 통과
+- 진행 상태: 구현과 자동화 검증 완료
+
+구현 결과:
+
+- Pinia document store가 editor draft와 저장 상태의 source of truth를 담당한다.
+- `PUT /api/files/{path}`에 content와 base hash를 전송하고 성공 snapshot을 반영한다.
+- 저장 중 추가 입력을 보존하며 중복 HTTP update를 차단한다.
+- `write_conflict`에서 local draft를 유지하고 자동 overwrite하지 않는다.
+- retryable error, `Ctrl/Cmd+S`, browser 이탈 경고와 내부 route 전환 확인을 제공한다.
+- autosave는 B08 browser draft recovery 이후로 보류한다.
 
 ### B08 Browser draft recovery
 

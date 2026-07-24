@@ -13,3 +13,12 @@ export interface DocumentLoadError {
   message: string
   retryable: boolean
 }
+
+export type DocumentSaveStatus = 'clean' | 'dirty' | 'saving' | 'conflict' | 'error'
+
+export interface DocumentSaveError {
+  code: string
+  message: string
+  retryable: boolean
+  currentHash: string | null
+}

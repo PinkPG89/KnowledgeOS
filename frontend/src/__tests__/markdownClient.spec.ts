@@ -80,4 +80,57 @@ describe('HttpMarkdownClient', () => {
       status: 404,
     })
   })
+
+  it('updates a document with its base hash', async () => {
+    const content = '# Updated\n'
+    const fetcher = vi.fn(async () =>
+      jsonResponse({
+        path: 'notes/한글.md',
+        content,
+        hash: `sha256:${'b'.repeat(64)}`,
+        size: content.length,
+        modified_at: modifiedAt,
+      }),
+    )
+    const client = new HttpMarkdownClient(fetcher)
+
+    const updated = await client.updateFile('notes/한글.md', content, hash)
+
+    expect(fetcher).toHaveBeenCalledWith(
+      '/api/files/notes/%ED%95%9C%EA%B8%80.md',
+      expect.objectContaining({
+        method: 'PUT',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content, base_hash: hash }),
+      }),
+    )
+    expect(updated.content).toBe(content)
+  })
+
+  it('preserves the current hash from a write conflict', async () => {
+    const currentHash = `sha256:${'c'.repeat(64)}`
+    const client = new HttpMarkdownClient(async () =>
+      jsonResponse(
+        {
+          error: {
+            code: 'write_conflict',
+            message: 'Markdown file changed',
+            details: { path: 'note.md', current_hash: currentHash },
+          },
+        },
+        409,
+      ),
+    )
+
+    const error = await client.updateFile('note.md', 'changed', hash).catch((reason) => reason)
+
+    expect(error).toMatchObject({
+      code: 'write_conflict',
+      status: 409,
+      currentHash,
+    })
+  })
 })

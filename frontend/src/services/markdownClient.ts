@@ -5,6 +5,12 @@ type Fetcher = (input: RequestInfo | URL, init?: RequestInit) => Promise<Respons
 
 export interface MarkdownClient {
   readFile(path: string, signal?: AbortSignal): Promise<MarkdownDocument>
+  updateFile(
+    path: string,
+    content: string,
+    baseHash: string,
+    signal?: AbortSignal,
+  ): Promise<MarkdownDocument>
 }
 
 export class MarkdownClientError extends Error {
@@ -12,6 +18,7 @@ export class MarkdownClientError extends Error {
     readonly code: string,
     message: string,
     readonly status: number | null,
+    readonly currentHash: string | null = null,
   ) {
     super(message)
     this.name = 'MarkdownClientError'
@@ -32,6 +39,42 @@ export class HttpMarkdownClient implements MarkdownClient {
     try {
       response = await this.fetcher(`/api/files/${encodeCanonicalPath(path)}`, {
         headers: { Accept: 'application/json' },
+        signal,
+      })
+    } catch (error) {
+      if (signal?.aborted || (error instanceof DOMException && error.name === 'AbortError')) {
+        throw new MarkdownClientError('request_aborted', 'Markdown 요청이 취소되었습니다.', null)
+      }
+      throw new MarkdownClientError('network_error', 'Markdown API에 연결할 수 없습니다.', null)
+    }
+
+    const body = await readJson(response)
+    if (!response.ok) throw parseApiError(response.status, body)
+    return parseMarkdownDocument(body, path)
+  }
+
+  async updateFile(
+    path: string,
+    content: string,
+    baseHash: string,
+    signal?: AbortSignal,
+  ): Promise<MarkdownDocument> {
+    if (!isMarkdownPath(path)) {
+      throw new MarkdownClientError('invalid_path', '올바른 Markdown 경로가 아닙니다.', 400)
+    }
+    if (!isSha256Hash(baseHash)) {
+      throw new MarkdownClientError('invalid_base_hash', '올바른 기준 hash가 아닙니다.', 400)
+    }
+
+    let response: Response
+    try {
+      response = await this.fetcher(`/api/files/${encodeCanonicalPath(path)}`, {
+        method: 'PUT',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content, base_hash: baseHash }),
         signal,
       })
     } catch (error) {
@@ -71,7 +114,11 @@ function parseApiError(status: number, body: unknown): MarkdownClientError {
     typeof body.error.message === 'string'
       ? body.error.message
       : 'Markdown API 요청이 실패했습니다.'
-  return new MarkdownClientError(code, message, status)
+  const currentHash =
+    isRecord(body.error.details) && isSha256Hash(body.error.details.current_hash)
+      ? body.error.details.current_hash
+      : null
+  return new MarkdownClientError(code, message, status, currentHash)
 }
 
 function parseMarkdownDocument(body: unknown, requestedPath: string): MarkdownDocument {
@@ -87,7 +134,7 @@ function parseMarkdownDocument(body: unknown, requestedPath: string): MarkdownDo
   }
 
   if (
-    !/^sha256:[0-9a-f]{64}$/.test(body.hash) ||
+    !isSha256Hash(body.hash) ||
     !Number.isSafeInteger(body.size) ||
     body.size < 0 ||
     new TextEncoder().encode(body.content).byteLength !== body.size ||
@@ -103,6 +150,10 @@ function parseMarkdownDocument(body: unknown, requestedPath: string): MarkdownDo
     size: body.size,
     modifiedAt: body.modified_at,
   }
+}
+
+function isSha256Hash(value: unknown): value is string {
+  return typeof value === 'string' && /^sha256:[0-9a-f]{64}$/.test(value)
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

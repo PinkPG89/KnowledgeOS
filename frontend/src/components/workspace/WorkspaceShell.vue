@@ -3,9 +3,11 @@ import NetworkStatus from '@/components/NetworkStatus.vue'
 import MarkdownDocumentPane from '@/components/editor/MarkdownDocumentPane.vue'
 import FileTreePanel from '@/components/tree/FileTreePanel.vue'
 import { useResponsiveLayout } from '@/composables/useResponsiveLayout'
+import { useDocumentStore } from '@/stores/document'
 import { getBrowserStorage } from '@/utils/browserStorage'
 
 const layout = useResponsiveLayout()
+const documentState = useDocumentStore()
 const emit = defineEmits<{ openFile: [path: string] }>()
 
 function toggleNavigation() {
@@ -119,7 +121,7 @@ function handleEscape(event: KeyboardEvent) {
         <dl class="metadata-list">
           <div>
             <dt>상태</dt>
-            <dd>편집기 검증 중</dd>
+            <dd>{{ documentState.status }}</dd>
           </div>
           <div>
             <dt>형식</dt>
@@ -127,7 +129,7 @@ function handleEscape(event: KeyboardEvent) {
           </div>
           <div>
             <dt>저장</dt>
-            <dd>미연결 · B07 예정</dd>
+            <dd>{{ documentState.saveStatus }}</dd>
           </div>
         </dl>
       </aside>

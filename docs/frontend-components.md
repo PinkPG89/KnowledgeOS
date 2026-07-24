@@ -78,7 +78,8 @@ Tree | Edit | Search | Info
 
 - CodeMirror 6
 - Markdown parser는 preview 전용으로 사용
-- autosave는 debounce 후 `PUT /api/files/{path}` 호출
+- B07은 명시적 저장과 `Ctrl/Cmd+S`로 `PUT /api/files/{path}` 호출
+- autosave debounce는 B08 browser draft recovery 이후 활성화
 
 저장 상태:
 

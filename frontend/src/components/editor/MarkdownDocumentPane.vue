@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineAsyncComponent, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import MarkdownPreview from '@/components/editor/MarkdownPreview.vue'
 import { useDocumentStore } from '@/stores/document'
@@ -8,18 +8,58 @@ const MarkdownEditorSpike = defineAsyncComponent(
   () => import('@/components/editor/MarkdownEditorSpike.vue'),
 )
 const documentState = useDocumentStore()
-const spikeDraft = ref('')
 const compositionActive = ref(false)
 const documentMode = ref<'edit' | 'preview'>('preview')
 
 watch(
-  () => documentState.document,
-  (document) => {
-    spikeDraft.value = document?.content ?? ''
+  () => documentState.activePath,
+  () => {
     compositionActive.value = false
   },
-  { immediate: true },
 )
+
+const saveStatusLabel = computed(() => {
+  switch (documentState.saveStatus) {
+    case 'dirty':
+      return '저장되지 않은 변경'
+    case 'saving':
+      return '저장 중'
+    case 'conflict':
+      return '외부 변경 충돌'
+    case 'error':
+      return '저장 실패'
+    default:
+      return '저장됨'
+  }
+})
+
+function handleKeyboardSave(event: KeyboardEvent) {
+  if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 's') return
+  event.preventDefault()
+  if (compositionActive.value) return
+  void documentState.save()
+}
+
+function handleBeforeUnload(event: BeforeUnloadEvent) {
+  if (!documentState.hasUnsavedChanges) return
+  event.preventDefault()
+  event.returnValue = ''
+}
+
+function discardConflictDraft() {
+  if (!window.confirm('현재 초안을 버리고 서버 버전을 다시 불러오시겠습니까?')) return
+  void documentState.discardAndReload()
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyboardSave)
+  window.addEventListener('beforeunload', handleBeforeUnload)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeyboardSave)
+  window.removeEventListener('beforeunload', handleBeforeUnload)
+})
 </script>
 
 <template>
@@ -61,7 +101,7 @@ watch(
       <article class="document-content" aria-labelledby="editor-title">
         <header class="document-content__header">
           <div>
-            <p>CodeMirror 6 Spike</p>
+            <p>Markdown Document</p>
             <h1 id="editor-title">
               {{ documentState.document.path.split('/').slice(-1)[0] }}
             </h1>
@@ -78,37 +118,78 @@ watch(
           </dl>
         </header>
         <div class="document-content__controls">
-          <p class="document-content__notice" role="status">
-            <template v-if="documentMode === 'edit'">
-              실험용 편집기 · 변경 내용은 아직 저장되지 않습니다.
-              <span v-if="compositionActive">한글 입력 조합 중</span>
-            </template>
-            <template v-else>Markdown 렌더링 미리보기</template>
+          <p
+            class="document-content__notice"
+            :data-save-status="documentState.saveStatus"
+            role="status"
+          >
+            <span>{{ saveStatusLabel }}</span>
+            <span v-if="compositionActive">한글 입력 조합 중</span>
+            <span v-else-if="documentMode === 'preview'">Markdown 미리보기</span>
           </p>
-          <div class="document-mode" role="group" aria-label="문서 표시 방식">
+          <div class="document-content__actions">
             <button
+              class="save-button"
               type="button"
-              :aria-pressed="documentMode === 'preview'"
-              @click="documentMode = 'preview'"
+              :disabled="!documentState.canSave || compositionActive"
+              @click="documentState.save()"
             >
-              미리보기
+              {{ documentState.saveStatus === 'saving' ? '저장 중…' : '저장' }}
             </button>
-            <button
-              type="button"
-              :aria-pressed="documentMode === 'edit'"
-              @click="documentMode = 'edit'"
-            >
-              편집
-            </button>
+            <div class="document-mode" role="group" aria-label="문서 표시 방식">
+              <button
+                type="button"
+                :aria-pressed="documentMode === 'preview'"
+                @click="documentMode = 'preview'"
+              >
+                미리보기
+              </button>
+              <button
+                type="button"
+                :aria-pressed="documentMode === 'edit'"
+                @click="documentMode = 'edit'"
+              >
+                편집
+              </button>
+            </div>
           </div>
+        </div>
+        <div
+          v-if="documentState.saveStatus === 'conflict'"
+          class="save-feedback save-feedback--conflict"
+          role="alert"
+        >
+          <div>
+            <strong>서버의 문서가 먼저 변경되었습니다.</strong>
+            <p>현재 초안은 화면에 보존됩니다. 자동으로 덮어쓰지 않습니다.</p>
+          </div>
+          <button type="button" @click="discardConflictDraft">초안 버리고 다시 불러오기</button>
+        </div>
+        <div
+          v-else-if="documentState.saveStatus === 'error'"
+          class="save-feedback save-feedback--error"
+          role="alert"
+        >
+          <div>
+            <strong>{{ documentState.saveError?.code }}</strong>
+            <p>{{ documentState.saveError?.message }}</p>
+          </div>
+          <button
+            v-if="documentState.saveError?.retryable"
+            type="button"
+            @click="documentState.retrySave()"
+          >
+            저장 다시 시도
+          </button>
         </div>
         <MarkdownEditorSpike
           v-if="documentMode === 'edit'"
-          v-model="spikeDraft"
+          :model-value="documentState.draft"
           :aria-label="`${documentState.document.path} Markdown 편집기`"
+          @update:model-value="documentState.setDraft"
           @composition-change="compositionActive = $event"
         />
-        <MarkdownPreview v-else :source="spikeDraft" />
+        <MarkdownPreview v-else :source="documentState.draft" />
         <footer>Hash · {{ documentState.document.hash }}</footer>
       </article>
     </template>
@@ -263,10 +344,79 @@ watch(
   line-height: 1.5;
 }
 
-.document-content__notice span {
+.document-content__notice > span:first-child {
+  color: var(--color-text);
+  font-weight: 800;
+}
+
+.document-content__notice[data-save-status='dirty'],
+.document-content__notice[data-save-status='saving'] {
+  border-color: color-mix(in srgb, var(--color-warning) 45%, var(--color-border));
+}
+
+.document-content__notice[data-save-status='conflict'],
+.document-content__notice[data-save-status='error'] {
+  border-color: color-mix(in srgb, var(--color-danger) 45%, var(--color-border));
+  background: color-mix(in srgb, var(--color-danger) 8%, var(--color-surface));
+}
+
+.document-content__notice span:last-child:not(:first-child) {
   flex: 0 0 auto;
   color: var(--color-warning);
   font-weight: 800;
+}
+
+.document-content__actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0.5rem;
+}
+
+.save-button,
+.save-feedback button {
+  min-height: 2.8rem;
+  padding: 0 1rem;
+  border: 0;
+  border-radius: 0.75rem;
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.save-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.save-feedback {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0 1rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.85rem;
+  background: var(--color-surface);
+}
+
+.save-feedback--conflict,
+.save-feedback--error {
+  border-color: color-mix(in srgb, var(--color-danger) 45%, var(--color-border));
+}
+
+.save-feedback strong {
+  color: var(--color-danger);
+}
+
+.save-feedback p {
+  margin: 0.35rem 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
 }
 
 .document-mode {
@@ -338,13 +488,28 @@ watch(
     margin-left: 1rem;
   }
 
+  .document-content__actions,
   .document-mode {
     width: 100%;
+  }
+
+  .save-button {
+    flex: 0 0 auto;
   }
 
   .document-mode button {
     flex: 1 1 50%;
     min-height: 2.75rem;
+  }
+
+  .save-feedback {
+    display: grid;
+    margin-right: 1rem;
+    margin-left: 1rem;
+  }
+
+  .save-feedback button {
+    width: 100%;
   }
 
   .document-content footer {

@@ -33,6 +33,7 @@ describe('document store', () => {
             signals.set(path, signal)
           }),
       ),
+      updateFile: vi.fn(),
     }
     const store = useDocumentStore()
 
@@ -53,7 +54,7 @@ describe('document store', () => {
       .fn<MarkdownClient['readFile']>()
       .mockRejectedValueOnce(new MarkdownClientError('internal_error', 'Temporary failure', 500))
       .mockResolvedValueOnce(document('note.md', 'recovered'))
-    const client: MarkdownClient = { readFile }
+    const client: MarkdownClient = { readFile, updateFile: vi.fn() }
     const store = useDocumentStore()
 
     await store.openFile('note.md', client)
@@ -76,6 +77,7 @@ describe('document store', () => {
         observedSignal = signal
         return new Promise(() => undefined)
       },
+      updateFile: vi.fn(),
     }
     const store = useDocumentStore()
 
@@ -85,5 +87,94 @@ describe('document store', () => {
     expect(observedSignal?.aborted).toBe(true)
     expect(store.status).toBe('idle')
     expect(store.activePath).toBeNull()
+  })
+
+  it('prevents duplicate saves and preserves edits made while saving', async () => {
+    let resolveUpdate: ((value: MarkdownDocument) => void) | undefined
+    const updateFile = vi.fn(
+      () =>
+        new Promise<MarkdownDocument>((resolve) => {
+          resolveUpdate = resolve
+        }),
+    )
+    const client: MarkdownClient = {
+      readFile: vi.fn().mockResolvedValue(document('note.md', 'original')),
+      updateFile,
+    }
+    const store = useDocumentStore()
+    await store.openFile('note.md', client)
+    store.setDraft('first change')
+
+    const firstSave = store.save(client)
+    const duplicateSave = store.save(client)
+    store.setDraft('second change')
+
+    expect(updateFile).toHaveBeenCalledTimes(1)
+    expect(updateFile).toHaveBeenCalledWith('note.md', 'first change', hash)
+    expect(store.saveStatus).toBe('saving')
+
+    resolveUpdate?.({
+      ...document('note.md', 'first change'),
+      hash: `sha256:${'b'.repeat(64)}`,
+    })
+    await Promise.all([firstSave, duplicateSave])
+
+    expect(store.document?.content).toBe('first change')
+    expect(store.draft).toBe('second change')
+    expect(store.saveStatus).toBe('dirty')
+  })
+
+  it('retries a retryable save error', async () => {
+    const savedDocument = {
+      ...document('note.md', 'updated'),
+      hash: `sha256:${'b'.repeat(64)}`,
+    }
+    const updateFile = vi
+      .fn<MarkdownClient['updateFile']>()
+      .mockRejectedValueOnce(new MarkdownClientError('internal_error', 'Temporary failure', 500))
+      .mockResolvedValueOnce(savedDocument)
+    const client: MarkdownClient = {
+      readFile: vi.fn().mockResolvedValue(document('note.md', 'original')),
+      updateFile,
+    }
+    const store = useDocumentStore()
+    await store.openFile('note.md', client)
+    store.setDraft('updated')
+
+    await store.save(client)
+    expect(store.saveStatus).toBe('error')
+    expect(store.saveError?.retryable).toBe(true)
+
+    await store.retrySave(client)
+    expect(updateFile).toHaveBeenCalledTimes(2)
+    expect(store.saveStatus).toBe('clean')
+    expect(store.document).toEqual(savedDocument)
+  })
+
+  it('keeps the local draft when the backend reports a conflict', async () => {
+    const currentHash = `sha256:${'c'.repeat(64)}`
+    const client: MarkdownClient = {
+      readFile: vi.fn().mockResolvedValue(document('note.md', 'original')),
+      updateFile: vi
+        .fn()
+        .mockRejectedValue(
+          new MarkdownClientError('write_conflict', 'Markdown file changed', 409, currentHash),
+        ),
+    }
+    const store = useDocumentStore()
+    await store.openFile('note.md', client)
+    store.setDraft('local draft')
+
+    await store.save(client)
+
+    expect(store.saveStatus).toBe('conflict')
+    expect(store.draft).toBe('local draft')
+    expect(store.document?.content).toBe('original')
+    expect(store.saveError).toEqual({
+      code: 'write_conflict',
+      message: 'Markdown file changed',
+      retryable: false,
+      currentHash,
+    })
   })
 })
