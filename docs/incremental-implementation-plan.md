@@ -240,6 +240,16 @@
 - 범위: path+base hash draft, resume/discard UI
 - 참고: Flatnotes `Note.vue`
 - 완료 기준: reload recovery와 remote-change conflict test 통과
+- 진행 상태: 구현과 자동화 검증 완료
+
+구현 결과:
+
+- native IndexedDB `knowledgeos/drafts` repository에 path, base hash, content와 timestamp를 저장한다.
+- 같은 server hash의 draft는 resume/discard UI로 복구한다.
+- server hash가 달라진 draft는 자동 적용하지 않고 recovery conflict로 격리한다.
+- pending write는 route 전환과 browser background 시 best-effort로 flush한다.
+- server save 성공 후 browser draft를 제거하고 저장 중 추가 입력은 새 base hash로 다시 기록한다.
+- storage read, write와 delete 실패가 server document load나 local draft를 제거하지 않도록 처리한다.
 
 ## Track C: Search Projection
 

@@ -33,6 +33,19 @@ const saveStatusLabel = computed(() => {
   }
 })
 
+const draftBackupLabel = computed(() => {
+  switch (documentState.draftBackupStatus) {
+    case 'pending':
+      return '브라우저 초안 저장 중'
+    case 'saved':
+      return '브라우저 초안 보관됨'
+    case 'error':
+      return documentState.draftBackupError ?? '브라우저 초안 저장 실패'
+    default:
+      return null
+  }
+})
+
 function handleKeyboardSave(event: KeyboardEvent) {
   if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 's') return
   event.preventDefault()
@@ -42,8 +55,13 @@ function handleKeyboardSave(event: KeyboardEvent) {
 
 function handleBeforeUnload(event: BeforeUnloadEvent) {
   if (!documentState.hasUnsavedChanges) return
+  void documentState.flushDraftPersistence()
   event.preventDefault()
   event.returnValue = ''
+}
+
+function handleVisibilityChange() {
+  if (document.visibilityState === 'hidden') void documentState.flushDraftPersistence()
 }
 
 function discardConflictDraft() {
@@ -51,14 +69,21 @@ function discardConflictDraft() {
   void documentState.discardAndReload()
 }
 
+function discardRecoveredDraft() {
+  if (!window.confirm('브라우저에 보관된 초안을 영구적으로 삭제하시겠습니까?')) return
+  void documentState.discardRecoveredDraft()
+}
+
 onMounted(() => {
   window.addEventListener('keydown', handleKeyboardSave)
   window.addEventListener('beforeunload', handleBeforeUnload)
+  document.addEventListener('visibilitychange', handleVisibilityChange)
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleKeyboardSave)
   window.removeEventListener('beforeunload', handleBeforeUnload)
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
 })
 </script>
 
@@ -125,6 +150,7 @@ onBeforeUnmount(() => {
           >
             <span>{{ saveStatusLabel }}</span>
             <span v-if="compositionActive">한글 입력 조합 중</span>
+            <span v-else-if="draftBackupLabel">{{ draftBackupLabel }}</span>
             <span v-else-if="documentMode === 'preview'">Markdown 미리보기</span>
           </p>
           <div class="document-content__actions">
@@ -155,7 +181,38 @@ onBeforeUnmount(() => {
           </div>
         </div>
         <div
-          v-if="documentState.saveStatus === 'conflict'"
+          v-if="documentState.recoveryStatus !== 'none'"
+          class="save-feedback save-feedback--recovery"
+          :data-recovery-status="documentState.recoveryStatus"
+          role="alert"
+        >
+          <div>
+            <strong>
+              {{
+                documentState.recoveryStatus === 'conflict'
+                  ? '서버 변경과 충돌하는 브라우저 초안이 있습니다.'
+                  : '저장하지 않은 브라우저 초안이 있습니다.'
+              }}
+            </strong>
+            <p>
+              {{
+                documentState.recoveryStatus === 'conflict'
+                  ? '자동 적용하지 않았습니다. 초안을 열어 비교하거나 폐기할 수 있습니다.'
+                  : `${documentState.recoveredDraft?.updatedAt}에 보관된 초안을 복구할 수 있습니다.`
+              }}
+            </p>
+          </div>
+          <div class="save-feedback__actions">
+            <button type="button" @click="documentState.resumeRecoveredDraft()">
+              {{ documentState.recoveryStatus === 'conflict' ? '충돌 초안 열기' : '초안 이어쓰기' }}
+            </button>
+            <button class="secondary-button" type="button" @click="discardRecoveredDraft">
+              초안 폐기
+            </button>
+          </div>
+        </div>
+        <div
+          v-else-if="documentState.saveStatus === 'conflict'"
           class="save-feedback save-feedback--conflict"
           role="alert"
         >
@@ -408,7 +465,24 @@ onBeforeUnmount(() => {
   border-color: color-mix(in srgb, var(--color-danger) 45%, var(--color-border));
 }
 
+.save-feedback--recovery {
+  border-color: color-mix(in srgb, var(--color-warning) 45%, var(--color-border));
+  background: color-mix(in srgb, var(--color-warning) 8%, var(--color-surface));
+}
+
+.save-feedback--recovery[data-recovery-status='conflict'] {
+  border-color: color-mix(in srgb, var(--color-danger) 45%, var(--color-border));
+}
+
 .save-feedback strong {
+  color: var(--color-danger);
+}
+
+.save-feedback--recovery strong {
+  color: var(--color-warning);
+}
+
+.save-feedback--recovery[data-recovery-status='conflict'] strong {
   color: var(--color-danger);
 }
 
@@ -417,6 +491,18 @@ onBeforeUnmount(() => {
   color: var(--color-text-muted);
   font-size: 0.8rem;
   line-height: 1.5;
+}
+
+.save-feedback__actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0.5rem;
+}
+
+.save-feedback .secondary-button {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
 }
 
 .document-mode {
@@ -509,6 +595,11 @@ onBeforeUnmount(() => {
   }
 
   .save-feedback button {
+    width: 100%;
+  }
+
+  .save-feedback__actions {
+    display: grid;
     width: 100%;
   }
 

@@ -22,3 +22,14 @@ export interface DocumentSaveError {
   retryable: boolean
   currentHash: string | null
 }
+
+export type DraftRecoveryStatus = 'none' | 'available' | 'conflict'
+
+export type DraftBackupStatus = 'idle' | 'pending' | 'saved' | 'error'
+
+export interface BrowserDraft {
+  path: string
+  baseHash: string
+  content: string
+  updatedAt: string
+}

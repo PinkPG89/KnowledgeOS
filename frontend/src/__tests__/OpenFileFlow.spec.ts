@@ -4,7 +4,10 @@ import { createMemoryHistory } from 'vue-router'
 import { describe, expect, it, vi } from 'vitest'
 
 import App from '@/App.vue'
+import type { BrowserDraft } from '@/models/markdown'
 import { createAppRouter } from '@/router'
+import type { DraftRepository } from '@/services/draftRepository'
+import type { MarkdownClient } from '@/services/markdownClient'
 import { useDocumentStore } from '@/stores/document'
 
 import { createMatchMediaController } from './matchMedia'
@@ -259,5 +262,69 @@ describe('open file flow', () => {
     expect(confirm).toHaveBeenCalledOnce()
     expect(router.currentRoute.value.params.path).toBe('note.md')
     expect(store.draft).toBe('# Unsaved\n')
+  })
+
+  it('renders a remote-change recovery conflict before opening the local draft', async () => {
+    const serverContent = '# Server changed\n'
+    const localContent = '# Browser draft\n'
+    const serverHash = `sha256:${'c'.repeat(64)}`
+    const browserDraft: BrowserDraft = {
+      path: 'note.md',
+      baseHash: hash,
+      content: localContent,
+      updatedAt: '2026-07-24T01:02:03.004Z',
+    }
+    const repository: DraftRepository = {
+      get: vi.fn().mockResolvedValue(browserDraft),
+      put: vi.fn(),
+      remove: vi.fn(),
+    }
+    const client: MarkdownClient = {
+      readFile: vi.fn().mockResolvedValue({
+        path: 'note.md',
+        content: serverContent,
+        hash: serverHash,
+        size: serverContent.length,
+        modifiedAt,
+      }),
+      updateFile: vi.fn(),
+    }
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        if (String(input) === '/api/tree') {
+          return jsonResponse({
+            path: '',
+            entries: [treeEntry('file', 'note.md', 'note.md', serverContent.length)],
+          })
+        }
+        return jsonResponse({
+          path: 'note.md',
+          content: serverContent,
+          hash: serverHash,
+          size: serverContent.length,
+          modified_at: modifiedAt,
+        })
+      }),
+    )
+    const { pinia, wrapper } = await mountAppAt('/files/note.md')
+    await flushPromises()
+    const store = useDocumentStore(pinia)
+    await store.openFile('note.md', client, repository)
+    await flushPromises()
+
+    expect(wrapper.get('[data-recovery-status="conflict"]').text()).toContain(
+      '서버 변경과 충돌하는 브라우저 초안이 있습니다.',
+    )
+    expect(wrapper.get('.markdown-preview h1').text()).toBe('Server changed')
+
+    await wrapper.get('[data-recovery-status="conflict"] button').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.get('.save-feedback--conflict').text()).toContain(
+      '서버의 문서가 먼저 변경되었습니다.',
+    )
+    expect(wrapper.get('.markdown-preview h1').text()).toBe('Browser draft')
+    expect(store.saveStatus).toBe('conflict')
   })
 })

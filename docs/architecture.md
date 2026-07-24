@@ -148,8 +148,11 @@ Frontend 결정 상태:
 - `.knowledgeos/`: 설정, 캐시, lock, index를 둡니다.
 - Vault Git repository: version history와 감사 로그입니다.
 - 별도 bare repository 또는 offsite storage: 장치 장애 복구용 복제본입니다.
+- Browser IndexedDB: 저장 전 editor draft를 복구하기 위한 임시 projection입니다.
 
 `knowledge/`와 `.knowledgeos/`는 의존 방향이 반대입니다. `.knowledgeos/`는 `knowledge/`에서 재생성할 수 있지만, `knowledge/`는 `.knowledgeos/`에 의존하면 안 됩니다.
+
+Browser IndexedDB draft도 source of truth가 아니며 browser profile이나 origin이 바뀌면 사라질 수 있습니다. Draft는 path와 server base hash를 함께 저장하고 hash 불일치 시 자동 적용하지 않습니다.
 
 MVP는 process 하나당 하나의 활성 Vault를 사용합니다. `KNOWLEDGEOS_KNOWLEDGE_ROOT` 변경 후 재시작해 다른 Vault를 선택합니다. 상세 경계는 [Vault Policy](vault-policy.md)를 따릅니다.
 

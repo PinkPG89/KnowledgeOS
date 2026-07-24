@@ -1,7 +1,8 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { MarkdownDocument } from '@/models/markdown'
+import type { BrowserDraft, MarkdownDocument } from '@/models/markdown'
+import type { DraftRepository } from '@/services/draftRepository'
 import { MarkdownClientError, type MarkdownClient } from '@/services/markdownClient'
 import { useDocumentStore } from '@/stores/document'
 
@@ -14,6 +15,22 @@ function document(path: string, content: string): MarkdownDocument {
     hash,
     size: new TextEncoder().encode(content).byteLength,
     modifiedAt: '2026-07-22T01:02:03.004Z',
+  }
+}
+
+class MemoryDraftRepository implements DraftRepository {
+  readonly drafts = new Map<string, BrowserDraft>()
+
+  async get(path: string): Promise<BrowserDraft | null> {
+    return this.drafts.get(path) ?? null
+  }
+
+  async put(draft: BrowserDraft): Promise<void> {
+    this.drafts.set(draft.path, structuredClone(draft))
+  }
+
+  async remove(path: string): Promise<void> {
+    this.drafts.delete(path)
   }
 }
 
@@ -90,6 +107,7 @@ describe('document store', () => {
   })
 
   it('prevents duplicate saves and preserves edits made while saving', async () => {
+    const repository = new MemoryDraftRepository()
     let resolveUpdate: ((value: MarkdownDocument) => void) | undefined
     const updateFile = vi.fn(
       () =>
@@ -102,7 +120,7 @@ describe('document store', () => {
       updateFile,
     }
     const store = useDocumentStore()
-    await store.openFile('note.md', client)
+    await store.openFile('note.md', client, repository)
     store.setDraft('first change')
 
     const firstSave = store.save(client)
@@ -122,6 +140,11 @@ describe('document store', () => {
     expect(store.document?.content).toBe('first change')
     expect(store.draft).toBe('second change')
     expect(store.saveStatus).toBe('dirty')
+    await store.flushDraftPersistence()
+    expect(repository.drafts.get('note.md')).toMatchObject({
+      baseHash: `sha256:${'b'.repeat(64)}`,
+      content: 'second change',
+    })
   })
 
   it('retries a retryable save error', async () => {
@@ -176,5 +199,131 @@ describe('document store', () => {
       retryable: false,
       currentHash,
     })
+  })
+
+  it('persists and resumes a browser draft after a store reload', async () => {
+    const repository = new MemoryDraftRepository()
+    const client: MarkdownClient = {
+      readFile: vi.fn().mockResolvedValue(document('note.md', 'server content')),
+      updateFile: vi.fn(),
+    }
+    const firstStore = useDocumentStore()
+    await firstStore.openFile('note.md', client, repository)
+    firstStore.setDraft('local draft')
+    await firstStore.flushDraftPersistence()
+
+    expect(repository.drafts.get('note.md')).toMatchObject({
+      path: 'note.md',
+      baseHash: hash,
+      content: 'local draft',
+    })
+
+    setActivePinia(createPinia())
+    const reloadedStore = useDocumentStore()
+    await reloadedStore.openFile('note.md', client, repository)
+
+    expect(reloadedStore.recoveryStatus).toBe('available')
+    expect(reloadedStore.draft).toBe('server content')
+    await reloadedStore.resumeRecoveredDraft()
+    expect(reloadedStore.draft).toBe('local draft')
+    expect(reloadedStore.saveStatus).toBe('dirty')
+  })
+
+  it('isolates a recovered draft when the server hash changed', async () => {
+    const repository = new MemoryDraftRepository()
+    const serverHash = `sha256:${'c'.repeat(64)}`
+    await repository.put({
+      path: 'note.md',
+      baseHash: hash,
+      content: 'stale local draft',
+      updatedAt: '2026-07-24T01:02:03.004Z',
+    })
+    const client: MarkdownClient = {
+      readFile: vi.fn().mockResolvedValue({
+        ...document('note.md', 'new server content'),
+        hash: serverHash,
+      }),
+      updateFile: vi.fn(),
+    }
+    const store = useDocumentStore()
+
+    await store.openFile('note.md', client, repository)
+
+    expect(store.recoveryStatus).toBe('conflict')
+    expect(store.draft).toBe('new server content')
+    await store.resumeRecoveredDraft()
+    expect(store.draft).toBe('stale local draft')
+    expect(store.document?.content).toBe('new server content')
+    expect(store.saveStatus).toBe('conflict')
+    expect(store.canSave).toBe(false)
+  })
+
+  it('removes the browser draft after a successful save', async () => {
+    const repository = new MemoryDraftRepository()
+    const savedDocument = {
+      ...document('note.md', 'saved content'),
+      hash: `sha256:${'b'.repeat(64)}`,
+    }
+    const client: MarkdownClient = {
+      readFile: vi.fn().mockResolvedValue(document('note.md', 'server content')),
+      updateFile: vi.fn().mockResolvedValue(savedDocument),
+    }
+    const store = useDocumentStore()
+    await store.openFile('note.md', client, repository)
+    store.setDraft('saved content')
+    await store.flushDraftPersistence()
+    expect(repository.drafts.has('note.md')).toBe(true)
+
+    await store.save(client)
+    await store.flushDraftPersistence()
+
+    expect(store.saveStatus).toBe('clean')
+    expect(repository.drafts.has('note.md')).toBe(false)
+  })
+
+  it('opens the server document when browser draft storage fails', async () => {
+    const repository: DraftRepository = {
+      get: vi.fn().mockRejectedValue(new Error('quota unavailable')),
+      put: vi.fn(),
+      remove: vi.fn(),
+    }
+    const client: MarkdownClient = {
+      readFile: vi.fn().mockResolvedValue(document('note.md', 'server content')),
+      updateFile: vi.fn(),
+    }
+    const store = useDocumentStore()
+
+    await store.openFile('note.md', client, repository)
+
+    expect(store.status).toBe('loaded')
+    expect(store.document?.content).toBe('server content')
+    expect(store.draftBackupStatus).toBe('error')
+    expect(store.draftBackupError).toBe('브라우저 초안을 불러오지 못했습니다.')
+  })
+
+  it('keeps recovery state when deleting the browser draft fails', async () => {
+    const repository: DraftRepository = {
+      get: vi.fn().mockResolvedValue({
+        path: 'note.md',
+        baseHash: hash,
+        content: 'local draft',
+        updatedAt: '2026-07-24T01:02:03.004Z',
+      }),
+      put: vi.fn(),
+      remove: vi.fn().mockRejectedValue(new Error('quota unavailable')),
+    }
+    const client: MarkdownClient = {
+      readFile: vi.fn().mockResolvedValue(document('note.md', 'server content')),
+      updateFile: vi.fn(),
+    }
+    const store = useDocumentStore()
+    await store.openFile('note.md', client, repository)
+
+    await store.discardRecoveredDraft()
+
+    expect(store.recoveryStatus).toBe('available')
+    expect(store.recoveredDraft?.content).toBe('local draft')
+    expect(store.draftBackupStatus).toBe('error')
+    expect(store.draftBackupError).toBe('브라우저 초안을 삭제하지 못했습니다.')
   })
 })

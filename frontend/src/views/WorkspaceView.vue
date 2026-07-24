@@ -22,7 +22,7 @@ const routePath = computed(() => {
 
 function confirmDocumentChange() {
   if (!documentState.hasUnsavedChanges) return true
-  return window.confirm('저장하지 않은 변경이 있습니다. 현재 초안을 버리고 이동하시겠습니까?')
+  return window.confirm('저장하지 않은 변경은 브라우저 초안으로 보관됩니다. 이동하시겠습니까?')
 }
 
 onBeforeRouteUpdate((to, from) => {
