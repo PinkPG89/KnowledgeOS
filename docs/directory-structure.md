@@ -89,6 +89,8 @@ KnowledgeOS/
 └── knowledge/
 ```
 
+Production에서는 같은 경계를 `/data/AppData/knowledgeos/state`와 `/data/AppData/knowledgeos/vault`처럼 별도 bind mount로 구성합니다. Backend는 `KNOWLEDGEOS_STATE_ROOT`와 `KNOWLEDGEOS_KNOWLEDGE_ROOT`로 두 위치를 각각 받습니다.
+
 - `.knowledgeos/config.json`: 앱 설정, root path, backup 정책입니다.
 - `.knowledgeos/index.sqlite`: 검색, backlink, tag 캐시입니다.
 - `.knowledgeos/locks/`: 파일 저장 충돌 방지용 lock 또는 lease입니다.

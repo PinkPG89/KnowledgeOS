@@ -18,6 +18,8 @@ pub struct AppConfig {
     pub bind_address: SocketAddr,
     /// 마크다운 문서들이 보관되는 단일 활성 Vault의 설정 경로
     pub knowledge_root: PathBuf,
+    /// 검색 index 등 재생성 가능한 application state를 저장하는 Vault 외부 경로
+    pub state_root: PathBuf,
     /// 로깅 시스템(`tracing`)에서 적용할 로그 범위와 필터 옵션
     pub log_filter: String,
     /// API가 한 번에 읽을 수 있는 Markdown file의 최대 byte 수
@@ -31,6 +33,8 @@ impl AppConfig {
     const DEFAULT_BIND_ADDRESS: &'static str = "127.0.0.1:3000";
     /// 기본 지식 저장소 경로 (현재 작업 디렉터리 상위의 knowledge 폴더)
     const DEFAULT_KNOWLEDGE_ROOT: &'static str = "../knowledge";
+    /// 기본 application state 경로
+    const DEFAULT_STATE_ROOT: &'static str = "../.knowledgeos";
     /// 기본 로깅 필터 (`knowledgeos_backend` 모듈의 로그 수준을 `info`로 제한)
     const DEFAULT_LOG_FILTER: &'static str = "knowledgeos_backend=info";
     /// 모바일 JSON 응답과 process memory를 제한하는 기본 Markdown 크기입니다.
@@ -56,6 +60,10 @@ impl AppConfig {
             env::var("KNOWLEDGEOS_KNOWLEDGE_ROOT")
                 .unwrap_or_else(|_| Self::DEFAULT_KNOWLEDGE_ROOT.to_owned()),
         );
+        let state_root = PathBuf::from(
+            env::var("KNOWLEDGEOS_STATE_ROOT")
+                .unwrap_or_else(|_| Self::DEFAULT_STATE_ROOT.to_owned()),
+        );
         let max_markdown_value = env::var("KNOWLEDGEOS_MAX_MARKDOWN_BYTES").ok();
         let max_markdown_bytes = parse_max_markdown_bytes(max_markdown_value.as_deref())?;
 
@@ -63,6 +71,7 @@ impl AppConfig {
         Ok(Self {
             bind_address,
             knowledge_root,
+            state_root,
             // KNOWLEDGEOS_LOG 환경 변수를 조회하여 로깅 범위 필터를 구성하며, 없을 시 기본 필터를 사용합니다.
             log_filter: env::var("KNOWLEDGEOS_LOG")
                 .unwrap_or_else(|_| Self::DEFAULT_LOG_FILTER.to_owned()),
@@ -76,11 +85,14 @@ impl AppConfig {
     /// 컴파일러가 경고(Warning)를 내보내도록 하는 애트리뷰트입니다.
     #[must_use]
     pub fn for_test(knowledge_root: impl Into<PathBuf>) -> Self {
+        let knowledge_root = knowledge_root.into();
+        let state_root = knowledge_root.join(".knowledgeos");
         Self {
             // 테스트 시에는 항상 고정된 로컬 IP `127.0.0.1:3000` 주소를 주입합니다.
             bind_address: SocketAddr::from(([127, 0, 0, 1], 3000)),
             // 테스트용 지식 저장소 루트 폴더를 "knowledge"로 지정합니다.
-            knowledge_root: knowledge_root.into(),
+            knowledge_root,
+            state_root,
             // 디버그 출력 로그 필터를 설정합니다.
             log_filter: Self::DEFAULT_LOG_FILTER.to_owned(),
             max_markdown_bytes: Self::DEFAULT_MAX_MARKDOWN_BYTES,

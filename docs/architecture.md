@@ -96,6 +96,8 @@ Backend API
 .knowledgeos/index.sqlite
 ```
 
+Application state 위치는 `KNOWLEDGEOS_STATE_ROOT`로 Vault와 별도 지정합니다. Docker에서는 `/data/knowledge`와 `/data/state`를 서로 다른 bind mount로 사용해 index 장애나 삭제가 Markdown 원본에 영향을 주지 않도록 합니다.
+
 ### Frontend
 
 - 모바일 우선 PWA

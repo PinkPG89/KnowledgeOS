@@ -21,8 +21,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --gid "${APP_GID}" knowledgeos \
     && useradd --uid "${APP_UID}" --gid "${APP_GID}" --no-create-home --shell /usr/sbin/nologin knowledgeos \
-    && mkdir -p /data/knowledge \
-    && chown knowledgeos:knowledgeos /data/knowledge
+    && mkdir -p /data/knowledge /data/state \
+    && chown knowledgeos:knowledgeos /data/knowledge /data/state
 
 COPY --from=builder /build/target/release/knowledgeos-backend /usr/local/bin/knowledgeos-backend
 
@@ -31,6 +31,7 @@ WORKDIR /app
 
 ENV KNOWLEDGEOS_BIND_ADDRESS=0.0.0.0:3000 \
     KNOWLEDGEOS_KNOWLEDGE_ROOT=/data/knowledge \
+    KNOWLEDGEOS_STATE_ROOT=/data/state \
     KNOWLEDGEOS_LOG=knowledgeos_backend=info
 
 EXPOSE 3000

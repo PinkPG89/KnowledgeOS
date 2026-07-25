@@ -12,6 +12,7 @@ services:
     environment:
       KNOWLEDGEOS_BIND_ADDRESS: 0.0.0.0:3000
       KNOWLEDGEOS_KNOWLEDGE_ROOT: /data/knowledge
+      KNOWLEDGEOS_STATE_ROOT: /data/state
       KNOWLEDGEOS_LOG: ${KNOWLEDGEOS_LOG:-knowledgeos_backend=info}
       KNOWLEDGEOS_MAX_MARKDOWN_BYTES: ${KNOWLEDGEOS_MAX_MARKDOWN_BYTES:-5242880}
     ports:
@@ -20,6 +21,9 @@ services:
       - type: bind
         source: ./knowledge
         target: /data/knowledge
+      - type: bind
+        source: ./.knowledgeos
+        target: /data/state
     init: true
     read_only: true
     tmpfs:

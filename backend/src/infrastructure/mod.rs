@@ -21,6 +21,9 @@ pub mod markdown;
 /// 파일 시스템에 마크다운 문서를 배타적으로 생성하거나 원자적으로 수정 교체하는 작성기 모듈입니다.
 pub mod markdown_writer;
 
+/// 재생성 가능한 `SQLite` FTS5 검색 projection의 schema 및 lifecycle 어댑터입니다.
+pub mod search_index;
+
 /// Vault 내부 디렉터리의 직계 자식 노드만 조회하는 lazy tree 파일시스템 어댑터 모듈입니다.
 pub mod tree;
 

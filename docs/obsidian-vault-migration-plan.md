@@ -23,6 +23,8 @@ KnowledgeOS application source repository에 사용자 문서를 복사하지 �
 ```text
 /data/AppData/knowledgeos/
 ├── import-archive/
+├── state/
+│   └── index.sqlite
 └── vault/
     ├── _attachments/
     ├── _templates/

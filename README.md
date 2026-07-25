@@ -106,7 +106,7 @@ A03
 ### 3. `backend/src/config.rs` (설정 가동 및 검증)
 * **역할**: 환경 변수를 파싱하고 올바른 형식인지 검증합니다.
 * **핵심 기능**:
-  - `KNOWLEDGEOS_BIND_ADDRESS`, `KNOWLEDGEOS_KNOWLEDGE_ROOT`, `KNOWLEDGEOS_LOG`, `KNOWLEDGEOS_MAX_MARKDOWN_BYTES` 환경 변수를 시스템으로부터 탐색합니다.
+  - `KNOWLEDGEOS_BIND_ADDRESS`, `KNOWLEDGEOS_KNOWLEDGE_ROOT`, `KNOWLEDGEOS_STATE_ROOT`, `KNOWLEDGEOS_LOG`, `KNOWLEDGEOS_MAX_MARKDOWN_BYTES` 환경 변수를 시스템으로부터 탐색합니다.
   - 값이 지정되지 않은 경우 적절한 기본값(예: 로컬 3000포트, `../knowledge` 디렉터리)으로 즉시 채워줍니다.
   - 주소 정보 문자열을 실제 주소 객체(`SocketAddr`)로 파싱하는데, 이 형식이 잘못되었다면 첫 클라이언트가 접속을 시도할 때가 아니라 **서버가 켜지는 즉시 에러를 내며 멈추도록(Fail-Fast)** 설계되었습니다.
 
@@ -201,13 +201,14 @@ cargo run
 
 * **Linux / macOS (Bash)**:
   ```bash
-  KNOWLEDGEOS_BIND_ADDRESS="127.0.0.1:8080" KNOWLEDGEOS_KNOWLEDGE_ROOT="/Users/myusername/my-markdown-vault" cargo run
+  KNOWLEDGEOS_BIND_ADDRESS="127.0.0.1:8080" KNOWLEDGEOS_KNOWLEDGE_ROOT="/Users/myusername/my-markdown-vault" KNOWLEDGEOS_STATE_ROOT="/Users/myusername/.knowledgeos" cargo run
   ```
 
 * **Windows (PowerShell)**:
   ```powershell
   $env:KNOWLEDGEOS_BIND_ADDRESS="127.0.0.1:8080"
   $env:KNOWLEDGEOS_KNOWLEDGE_ROOT="C:\my-markdown-vault"
+  $env:KNOWLEDGEOS_STATE_ROOT="C:\knowledgeos-state"
   cargo run
   ```
 

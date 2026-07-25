@@ -3,6 +3,7 @@ use crate::{
     infrastructure::{
         markdown::MarkdownReader,
         markdown_writer::MarkdownWriter,
+        search_index::SearchIndex,
         tree::TreeReader,
         vault::{VaultError, VaultRoot},
     },
@@ -27,6 +28,8 @@ pub struct AppState {
     pub markdown_writer: MarkdownWriter,
     /// 파일 내용을 읽지 않고 직계 자식 metadata만 조회하는 lazy tree 서비스
     pub tree_reader: TreeReader,
+    /// 장애 시 Markdown CRUD와 분리되는 재생성 가능한 검색 projection
+    pub search_index: Option<SearchIndex>,
 }
 
 impl AppState {
@@ -47,6 +50,24 @@ impl AppState {
         let markdown_reader = MarkdownReader::new(vault.clone(), config.max_markdown_bytes);
         let markdown_writer = MarkdownWriter::new(vault.clone(), config.max_markdown_bytes);
         let tree_reader = TreeReader::new(vault.clone());
+        let search_index = match SearchIndex::open(&config.state_root) {
+            Ok(index) => {
+                tracing::info!(
+                    state_root = %index.state_root().display(),
+                    database_path = %index.database_path().display(),
+                    "search index initialized"
+                );
+                Some(index)
+            }
+            Err(error) => {
+                tracing::error!(
+                    %error,
+                    state_root = %config.state_root.display(),
+                    "search index unavailable; continuing without search projection"
+                );
+                None
+            }
+        };
 
         // 서버 기동 로그를 Tracing 시스템에 기록합니다.
         // `%` 접두사는 해당 인스턴스의 Display 포맷을 사용해 구조화된 로깅 필드로 치환 출력하라는 지시어입니다.
@@ -64,6 +85,7 @@ impl AppState {
             markdown_reader,
             markdown_writer,
             tree_reader,
+            search_index,
         })
     }
 }

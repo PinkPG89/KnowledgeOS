@@ -258,6 +258,16 @@
 - 범위: SQLite FTS5 schema version, create, destroy, rebuild
 - 참고: Flatnotes index lifecycle
 - 완료 기준: DB 삭제 후 full rebuild test 통과
+- 진행 상태: schema lifecycle 구현과 자동화 검증 완료
+
+구현 결과:
+
+- `KNOWLEDGEOS_STATE_ROOT`를 Vault와 분리하고 `<state-root>/index.sqlite`를 사용한다.
+- `PRAGMA user_version = 1`, strict documents table과 Unicode FTS5 table을 생성한다.
+- version mismatch와 불완전 schema는 삭제 가능한 projection으로 폐기·재생성한다.
+- DB 삭제와 손상 후 destroy/rebuild lifecycle을 제공한다.
+- index 초기화 실패 시 Markdown API는 degraded mode로 계속 시작한다.
+- C01 rebuild는 최신 빈 schema 복구이며 filesystem population은 C02/C03에서 연결한다.
 
 ### C02 Markdown projection parser
 
