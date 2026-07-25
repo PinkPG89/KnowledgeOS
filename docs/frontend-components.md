@@ -73,6 +73,7 @@ Tree | Edit | Search | Info
 - 저장 상태 표시
 - hash 기반 충돌 감지
 - preview 전환
+- preview code block 복사
 
 후보 기술:
 

@@ -57,6 +57,7 @@ B06의 최종 완료 기준에는 iPhone Safari와 Android Chrome 실기기 검�
 - composition 중 external replacement 지연
 - large document viewport rendering 자동화 검증
 - heading, emphasis, list, table, code와 link Markdown preview
+- fenced·indented code block의 Clipboard API 우선 복사 control
 - preview와 source editor mode 전환
 
 ## 비범위

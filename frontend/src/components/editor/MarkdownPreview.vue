@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onBeforeUnmount } from 'vue'
 
 import { renderMarkdown } from '@/services/markdownRenderer'
 
@@ -8,10 +8,91 @@ const props = defineProps<{
 }>()
 
 const renderedHtml = computed(() => renderMarkdown(props.source))
+const resetTimers = new Map<HTMLButtonElement, number>()
+
+async function handlePreviewClick(event: MouseEvent) {
+  const target = event.target
+  if (!(target instanceof Element)) return
+
+  const button = target.closest<HTMLButtonElement>('[data-copy-code]')
+  const preview = event.currentTarget
+  if (!button || !(preview instanceof HTMLElement) || !preview.contains(button)) return
+
+  const code = button.closest('.markdown-code-block')?.querySelector('pre code')
+  if (!code) return
+
+  try {
+    await writeClipboard(code.textContent ?? '')
+    setCopyStatus(button, '복사됨', 'success')
+  } catch {
+    setCopyStatus(button, '복사 실패', 'error')
+  }
+}
+
+async function writeClipboard(content: string) {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(content)
+      return
+    }
+  } catch {
+    writeClipboardFallback(content)
+    return
+  }
+
+  writeClipboardFallback(content)
+}
+
+function writeClipboardFallback(content: string) {
+  const textarea = document.createElement('textarea')
+  textarea.value = content
+  textarea.setAttribute('readonly', '')
+  textarea.style.position = 'fixed'
+  textarea.style.opacity = '0'
+  document.body.append(textarea)
+  textarea.select()
+  textarea.setSelectionRange(0, textarea.value.length)
+
+  try {
+    if (!document.execCommand?.('copy')) throw new Error('clipboard copy failed')
+  } finally {
+    textarea.remove()
+  }
+}
+
+function setCopyStatus(
+  button: HTMLButtonElement,
+  label: '복사됨' | '복사 실패',
+  status: 'success' | 'error',
+) {
+  const previousTimer = resetTimers.get(button)
+  if (previousTimer) window.clearTimeout(previousTimer)
+
+  button.textContent = label
+  button.dataset.copyState = status
+  const timer = window.setTimeout(() => {
+    if (button.isConnected) {
+      button.textContent = '복사'
+      delete button.dataset.copyState
+    }
+    resetTimers.delete(button)
+  }, 2000)
+  resetTimers.set(button, timer)
+}
+
+onBeforeUnmount(() => {
+  for (const timer of resetTimers.values()) window.clearTimeout(timer)
+  resetTimers.clear()
+})
 </script>
 
 <template>
-  <article class="markdown-preview" aria-label="Markdown 미리보기" v-html="renderedHtml" />
+  <article
+    class="markdown-preview"
+    aria-label="Markdown 미리보기"
+    v-html="renderedHtml"
+    @click="handlePreviewClick"
+  />
 </template>
 
 <style scoped>
@@ -98,11 +179,60 @@ const renderedHtml = computed(() => renderMarkdown(props.source))
   font-size: 0.9em;
 }
 
-.markdown-preview :deep(pre) {
-  overflow-x: auto;
-  padding: 1rem;
+.markdown-preview :deep(.markdown-code-block) {
+  overflow: hidden;
+  margin: 0 0 1rem;
+  border: 1px solid color-mix(in srgb, var(--color-text) 75%, var(--color-border));
   border-radius: 0.65rem;
   background: var(--color-text);
+}
+
+.markdown-preview :deep(.markdown-code-block__toolbar) {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.35rem 0.45rem 0.35rem 0.85rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-background) 22%, transparent);
+  color: color-mix(in srgb, var(--color-background) 72%, transparent);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.72rem;
+}
+
+.markdown-preview :deep(.markdown-code-block__copy) {
+  min-width: 3.8rem;
+  min-height: 2rem;
+  padding: 0 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--color-background) 28%, transparent);
+  border-radius: 0.45rem;
+  background: color-mix(in srgb, var(--color-background) 10%, transparent);
+  color: var(--color-background);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+}
+
+.markdown-preview :deep(.markdown-code-block__copy:hover) {
+  background: color-mix(in srgb, var(--color-background) 18%, transparent);
+}
+
+.markdown-preview :deep(.markdown-code-block__copy[data-copy-state='success']) {
+  border-color: var(--color-success);
+  color: color-mix(in srgb, var(--color-success) 45%, white);
+}
+
+.markdown-preview :deep(.markdown-code-block__copy[data-copy-state='error']) {
+  border-color: var(--color-warning);
+  color: color-mix(in srgb, var(--color-warning) 45%, white);
+}
+
+.markdown-preview :deep(.markdown-code-block pre) {
+  overflow-x: auto;
+  margin: 0;
+  padding: 1rem;
+  border-radius: 0;
+  background: transparent;
   color: var(--color-background);
 }
 
