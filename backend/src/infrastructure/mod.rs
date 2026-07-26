@@ -18,6 +18,9 @@
 /// 디스크에서 안전하게 UTF-8 마크다운 파일 스냅샷을 읽어오는 판독기 모듈입니다.
 pub mod markdown;
 
+/// Markdown 원문을 검색용 파생 데이터로 변환하는 tolerant parser입니다.
+pub mod markdown_projection;
+
 /// 파일 시스템에 마크다운 문서를 배타적으로 생성하거나 원자적으로 수정 교체하는 작성기 모듈입니다.
 pub mod markdown_writer;
 

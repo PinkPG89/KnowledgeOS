@@ -273,6 +273,16 @@
 
 - 범위: title, body, frontmatter tags, links, hash 추출
 - 완료 기준: malformed frontmatter가 file CRUD를 막지 않음
+- 진행 상태: tolerant projection parser 구현과 자동화 검증 완료
+
+구현 결과:
+
+- frontmatter `title`, 첫 H1, filename stem 순서의 title fallback을 적용한다.
+- valid YAML frontmatter는 canonical JSON으로 변환하고 본문 projection에서 제외한다.
+- malformed 또는 닫히지 않은 frontmatter는 진단 상태만 남기고 전체 원문을 body로 유지한다.
+- frontmatter 및 inline tag를 정규화·중복 제거하고 code와 URL fragment를 제외한다.
+- Markdown link, image, wiki link와 wiki embed를 문법 종류와 함께 추출한다.
+- parser는 filesystem과 SQLite에 접근하지 않으며 C03에서 index sync와 연결한다.
 
 ### C03 Incremental index sync
 
