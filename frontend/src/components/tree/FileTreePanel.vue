@@ -3,13 +3,18 @@ import {
   computed,
   nextTick,
   onMounted,
+  ref,
   type ComponentPublicInstance,
   type CSSProperties,
 } from 'vue'
 
 import type { TreeDirectoryState, TreeNode } from '@/models/tree'
+import type { MarkdownCreateClient } from '@/services/markdownClient'
 import { treeClient as defaultTreeClient, type TreeClient } from '@/services/treeClient'
 import { ROOT_DIRECTORY_PATH, useTreeStore } from '@/stores/tree'
+import { directParentPath } from '@/utils/canonicalPath'
+
+import InlineDocumentCreate from './InlineDocumentCreate.vue'
 
 interface VisibleTreeItem {
   node: TreeNode
@@ -19,11 +24,12 @@ interface VisibleTreeItem {
   setSize: number
 }
 
-const props = defineProps<{ client?: TreeClient }>()
-const emit = defineEmits<{ openFile: [path: string] }>()
+const props = defineProps<{ client?: TreeClient; createClient?: MarkdownCreateClient }>()
+const emit = defineEmits<{ documentCreated: [path: string]; openFile: [path: string] }>()
 const tree = useTreeStore()
 const itemElements = new Map<string, HTMLElement>()
 const focusedPath = defineModel<string | null>('focusedPath', { default: null })
+const createParentPath = ref<string | null>(null)
 
 const rootState = computed(() => tree.directoriesByPath[ROOT_DIRECTORY_PATH]!)
 const visibleItems = computed(() => {
@@ -117,6 +123,34 @@ async function refreshRoot() {
   await tree.refreshDirectory(ROOT_DIRECTORY_PATH, props.client ?? defaultTreeClient)
 }
 
+async function beginDocumentCreate() {
+  if (createParentPath.value !== null) return
+
+  const contextualPath = focusedPath.value ?? tree.selectedPath
+  const focusedNode = contextualPath ? tree.nodesByPath[contextualPath] : undefined
+  const parentPath =
+    focusedNode?.kind === 'directory'
+      ? focusedNode.path
+      : focusedNode?.kind === 'file'
+        ? directParentPath(focusedNode.path)
+        : ROOT_DIRECTORY_PATH
+
+  if (parentPath !== ROOT_DIRECTORY_PATH && !directoryState(parentPath)?.expanded) {
+    await tree.toggleDirectory(parentPath, props.client ?? defaultTreeClient)
+  }
+
+  createParentPath.value = parentPath
+}
+
+function cancelDocumentCreate() {
+  createParentPath.value = null
+}
+
+function handleDocumentCreated(path: string) {
+  createParentPath.value = null
+  emit('documentCreated', path)
+}
+
 async function handleKeydown(event: KeyboardEvent, item: VisibleTreeItem) {
   const itemIndex = visibleItems.value.findIndex(({ node }) => node.path === item.node.path)
   let nextPath: string | undefined
@@ -167,14 +201,24 @@ async function handleKeydown(event: KeyboardEvent, item: VisibleTreeItem) {
   <section class="file-tree" aria-label="Vault 파일 트리">
     <div class="file-tree__toolbar">
       <span>Markdown files</span>
-      <button
-        type="button"
-        aria-label="파일 트리 새로고침"
-        :disabled="rootState.loadStatus === 'loading'"
-        @click="refreshRoot"
-      >
-        <span aria-hidden="true">↻</span>
-      </button>
+      <div class="file-tree__actions">
+        <button
+          type="button"
+          aria-label="선택 위치에 새 문서"
+          :disabled="rootState.loadStatus !== 'loaded' || createParentPath !== null"
+          @click="beginDocumentCreate"
+        >
+          <span aria-hidden="true">＋</span>
+        </button>
+        <button
+          type="button"
+          aria-label="파일 트리 새로고침"
+          :disabled="rootState.loadStatus === 'loading'"
+          @click="refreshRoot"
+        >
+          <span aria-hidden="true">↻</span>
+        </button>
+      </div>
     </div>
 
     <div
@@ -199,7 +243,7 @@ async function handleKeydown(event: KeyboardEvent, item: VisibleTreeItem) {
       <button type="button" @click="retryDirectory(ROOT_DIRECTORY_PATH)">다시 시도</button>
     </div>
 
-    <div v-else-if="visibleItems.length === 0" class="tree-state">
+    <div v-else-if="visibleItems.length === 0 && createParentPath === null" class="tree-state">
       <span aria-hidden="true">◇</span>
       <strong>Vault가 비어 있습니다.</strong>
       <p>Markdown 파일이나 폴더를 추가하면 이곳에 표시됩니다.</p>
@@ -212,6 +256,20 @@ async function handleKeydown(event: KeyboardEvent, item: VisibleTreeItem) {
       aria-label="Vault contents"
       :aria-busy="rootState.loadStatus === 'loading'"
     >
+      <li
+        v-if="createParentPath === ROOT_DIRECTORY_PATH"
+        class="tree-inline-create"
+        role="none"
+        :style="rowStyle(1)"
+      >
+        <InlineDocumentCreate
+          :client="createClient"
+          :parent-path="ROOT_DIRECTORY_PATH"
+          @cancel="cancelDocumentCreate"
+          @created="handleDocumentCreated"
+        />
+      </li>
+
       <template v-for="item in visibleItems" :key="item.node.path">
         <li
           :ref="(value) => setItemElement(item.node.path, value)"
@@ -253,6 +311,20 @@ async function handleKeydown(event: KeyboardEvent, item: VisibleTreeItem) {
             v-if="directoryState(item.node.path)?.loadStatus === 'loading'"
             class="tree-spinner"
             aria-hidden="true"
+          />
+        </li>
+
+        <li
+          v-if="item.node.kind === 'directory' && createParentPath === item.node.path"
+          class="tree-inline-create"
+          role="none"
+          :style="rowStyle(item.depth + 1)"
+        >
+          <InlineDocumentCreate
+            :client="createClient"
+            :parent-path="item.node.path"
+            @cancel="cancelDocumentCreate"
+            @created="handleDocumentCreated"
           />
         </li>
 
@@ -322,6 +394,11 @@ async function handleKeydown(event: KeyboardEvent, item: VisibleTreeItem) {
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.file-tree__actions {
+  display: flex;
+  align-items: center;
 }
 
 .file-tree__toolbar button,
@@ -435,6 +512,10 @@ async function handleKeydown(event: KeyboardEvent, item: VisibleTreeItem) {
   padding-left: calc(2.85rem + (var(--tree-depth) - 1) * 1rem);
   color: var(--color-text-muted);
   font-size: 0.75rem;
+}
+
+.tree-inline-create {
+  padding: 0.45rem 0.35rem 0.55rem calc(0.35rem + (var(--tree-depth) - 1) * 1rem);
 }
 
 .tree-inline-state button {

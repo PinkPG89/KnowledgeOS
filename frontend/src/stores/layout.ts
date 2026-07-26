@@ -4,8 +4,7 @@ export const DESKTOP_LAYOUT_QUERY = '(min-width: 64rem)'
 export const LAYOUT_PREFERENCE_KEY = 'knowledgeos:layout:v1'
 
 export type ViewportMode = 'desktop' | 'mobile'
-export type TransientPanel = 'create' | 'search'
-export type MobilePanel = 'navigation' | TransientPanel | 'inspector' | null
+export type MobilePanel = 'navigation' | 'search' | 'inspector' | null
 
 interface DesktopLayoutPreference {
   navigationOpen: boolean
@@ -16,7 +15,7 @@ interface LayoutState {
   viewportMode: ViewportMode
   desktopNavigationOpen: boolean
   desktopInspectorOpen: boolean
-  desktopTransientPanel: TransientPanel | null
+  desktopSearchOpen: boolean
   mobilePanel: MobilePanel
 }
 
@@ -51,7 +50,7 @@ export const useLayoutStore = defineStore('layout', {
     viewportMode: 'desktop',
     desktopNavigationOpen: true,
     desktopInspectorOpen: true,
-    desktopTransientPanel: null,
+    desktopSearchOpen: false,
     mobilePanel: null,
   }),
   getters: {
@@ -64,16 +63,8 @@ export const useLayoutStore = defineStore('layout', {
         ? state.desktopInspectorOpen
         : state.mobilePanel === 'inspector',
     searchVisible: (state) =>
-      state.viewportMode === 'desktop'
-        ? state.desktopTransientPanel === 'search'
-        : state.mobilePanel === 'search',
-    createVisible: (state) =>
-      state.viewportMode === 'desktop'
-        ? state.desktopTransientPanel === 'create'
-        : state.mobilePanel === 'create',
-    hasMobileOverlay: (state) =>
-      state.viewportMode === 'mobile' &&
-      (state.mobilePanel === 'navigation' || state.mobilePanel === 'inspector'),
+      state.viewportMode === 'desktop' ? state.desktopSearchOpen : state.mobilePanel === 'search',
+    hasMobileOverlay: (state) => state.viewportMode === 'mobile' && state.mobilePanel !== null,
   },
   actions: {
     restoreDesktopPreference(storage: Storage | undefined) {
@@ -89,7 +80,7 @@ export const useLayoutStore = defineStore('layout', {
       this.viewportMode = mode
       // Mobile overlay 상태는 일시적인 UI 상태이므로 breakpoint를 넘을 때 폐기합니다.
       this.mobilePanel = null
-      this.desktopTransientPanel = null
+      this.desktopSearchOpen = false
     },
     toggleNavigation(storage: Storage | undefined) {
       if (this.viewportMode === 'mobile') {
@@ -115,33 +106,13 @@ export const useLayoutStore = defineStore('layout', {
         return
       }
 
-      this.desktopTransientPanel = this.desktopTransientPanel === 'search' ? null : 'search'
+      this.desktopSearchOpen = !this.desktopSearchOpen
     },
     closeSearch() {
       if (this.viewportMode === 'mobile' && this.mobilePanel === 'search') {
         this.mobilePanel = null
       }
-      if (this.desktopTransientPanel === 'search') this.desktopTransientPanel = null
-    },
-    toggleCreate() {
-      if (this.viewportMode === 'mobile') {
-        this.mobilePanel = this.mobilePanel === 'create' ? null : 'create'
-        return
-      }
-
-      this.desktopTransientPanel = this.desktopTransientPanel === 'create' ? null : 'create'
-    },
-    closeCreate() {
-      if (this.viewportMode === 'mobile' && this.mobilePanel === 'create') {
-        this.mobilePanel = null
-      }
-      if (this.desktopTransientPanel === 'create') this.desktopTransientPanel = null
-    },
-    closeTransientPanel() {
-      if (this.mobilePanel === 'create' || this.mobilePanel === 'search') {
-        this.mobilePanel = null
-      }
-      this.desktopTransientPanel = null
+      this.desktopSearchOpen = false
     },
     closeMobilePanel() {
       this.mobilePanel = null

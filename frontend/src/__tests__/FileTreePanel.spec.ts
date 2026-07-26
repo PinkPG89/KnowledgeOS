@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 import FileTreePanel from '@/components/tree/FileTreePanel.vue'
 import type { TreeListing, TreeNode } from '@/models/tree'
+import type { MarkdownCreateClient } from '@/services/markdownClient'
 import { TreeClientError, type TreeClient } from '@/services/treeClient'
 
 const timestamp = '2026-07-22T01:02:03.004Z'
@@ -19,14 +20,25 @@ function file(name: string, path = name): TreeNode {
   return { kind: 'file', name, path, size: 10, modifiedAt: timestamp }
 }
 
-function mountPanel(listDirectory: TreeClient['listDirectory']) {
+function mountPanel(
+  listDirectory: TreeClient['listDirectory'],
+  createFile?: MarkdownCreateClient['createFile'],
+) {
   const client: TreeClient = { listDirectory: vi.fn(listDirectory) }
+  const createClient: MarkdownCreateClient = {
+    createFile: vi.fn(
+      createFile ??
+        (async () => {
+          throw new Error('unexpected create')
+        }),
+    ),
+  }
   const wrapper = mount(FileTreePanel, {
-    props: { client },
+    props: { client, createClient },
     attachTo: document.body,
     global: { plugins: [createPinia()] },
   })
-  return { client, wrapper }
+  return { client, createClient, wrapper }
 }
 
 describe('FileTreePanel', () => {
@@ -99,6 +111,63 @@ describe('FileTreePanel', () => {
     await projects.trigger('click')
     await flushPromises()
     expect(listDirectory).toHaveBeenCalledTimes(2)
+  })
+
+  it('creates a root document from the tree toolbar', async () => {
+    const { createClient, wrapper } = mountPanel(
+      async () => ({ path: '', entries: [file('existing.md')] }),
+      async (path, content) => ({
+        path,
+        content,
+        hash: `sha256:${'a'.repeat(64)}`,
+        size: 0,
+        modifiedAt: timestamp,
+      }),
+    )
+    await flushPromises()
+
+    await wrapper.get('[aria-label="선택 위치에 새 문서"]').trigger('click')
+    await wrapper.get('.inline-create input').setValue('root-note')
+    await wrapper.get('.inline-create').trigger('submit')
+    await flushPromises()
+
+    expect(createClient.createFile).toHaveBeenCalledWith(
+      'root-note.md',
+      '',
+      expect.any(AbortSignal),
+    )
+    expect(wrapper.emitted('documentCreated')).toEqual([['root-note.md']])
+  })
+
+  it('uses the focused directory as the inline create parent', async () => {
+    const listDirectory = vi.fn(async (path: string) => ({
+      path,
+      entries: path === '' ? [directory('projects')] : [],
+    }))
+    const { createClient, wrapper } = mountPanel(listDirectory, async (path, content) => ({
+      path,
+      content,
+      hash: `sha256:${'a'.repeat(64)}`,
+      size: 0,
+      modifiedAt: timestamp,
+    }))
+    await flushPromises()
+
+    await wrapper.get('[role="treeitem"]').trigger('focus')
+    await wrapper.get('[aria-label="선택 위치에 새 문서"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.get('.inline-create').text()).toContain('projects/')
+    expect(wrapper.get('[role="treeitem"]').attributes('aria-expanded')).toBe('true')
+    await wrapper.get('.inline-create input').setValue('Note.MD')
+    await wrapper.get('.inline-create').trigger('submit')
+    await flushPromises()
+
+    expect(createClient.createFile).toHaveBeenCalledWith(
+      'projects/Note.md',
+      '',
+      expect.any(AbortSignal),
+    )
   })
 
   it('shows nested loading and supports inline error retry', async () => {

@@ -183,7 +183,8 @@ describe('open file flow', () => {
   })
 
   it('creates a document, refreshes its parent, and opens it', async () => {
-    const content = '# 새 문서\n'
+    const content = ''
+    let notesAttempts = 0
     vi.stubGlobal(
       'fetch',
       vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -195,9 +196,13 @@ describe('open file flow', () => {
           })
         }
         if (url === '/api/tree?path=notes') {
+          notesAttempts += 1
           return jsonResponse({
             path: 'notes',
-            entries: [treeEntry('file', 'new.md', 'notes/new.md', content.length)],
+            entries:
+              notesAttempts === 1
+                ? []
+                : [treeEntry('file', 'new.md', 'notes/new.md', content.length)],
           })
         }
         if (url === '/api/files' && init?.method === 'POST') {
@@ -224,15 +229,17 @@ describe('open file flow', () => {
     const { router, wrapper } = await mountAppAt('/', false)
     await flushPromises()
 
-    await wrapper.get('[aria-label="새 문서 패널 전환"]').trigger('click')
-    await wrapper.get('input[name="path"]').setValue('notes/new.md')
-    await wrapper.get('input[name="title"]').setValue('새 문서')
-    await wrapper.get('#workspace-create form').trigger('submit')
+    await wrapper.get('[aria-label="파일 탐색 패널 전환"]').trigger('click')
+    await wrapper.get('[role="treeitem"]').trigger('focus')
+    await wrapper.get('[aria-label="선택 위치에 새 문서"]').trigger('click')
+    await flushPromises()
+    await wrapper.get('.inline-create input').setValue('new')
+    await wrapper.get('.inline-create').trigger('submit')
     await flushPromises()
 
     expect(router.currentRoute.value.params.path).toBe('notes/new.md')
-    expect(wrapper.find('#workspace-create').exists()).toBe(false)
-    expect(wrapper.get('.markdown-preview h1').text()).toBe('새 문서')
+    expect(wrapper.get('#workspace-navigation').attributes('aria-hidden')).toBe('true')
+    expect(wrapper.get('.metadata-list').text()).toContain('loaded')
     expect(wrapper.get('[aria-selected="true"]').text()).toContain('new.md')
   })
 

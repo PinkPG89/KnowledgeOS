@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import NetworkStatus from '@/components/NetworkStatus.vue'
-import CreateDocumentPanel from '@/components/create/CreateDocumentPanel.vue'
 import MarkdownDocumentPane from '@/components/editor/MarkdownDocumentPane.vue'
 import SearchPanel from '@/components/search/SearchPanel.vue'
 import FileTreePanel from '@/components/tree/FileTreePanel.vue'
@@ -24,14 +23,10 @@ function toggleSearch() {
   layout.toggleSearch()
 }
 
-function toggleCreate() {
-  layout.toggleCreate()
-}
-
 function handleEscape(event: KeyboardEvent) {
   if (event.key !== 'Escape') return
-  if (layout.searchVisible || layout.createVisible) {
-    layout.closeTransientPanel()
+  if (layout.searchVisible) {
+    layout.closeSearch()
   } else {
     layout.closeMobilePanel()
   }
@@ -40,11 +35,6 @@ function handleEscape(event: KeyboardEvent) {
 function openSearchResult(path: string) {
   layout.closeSearch()
   emit('openFile', path)
-}
-
-function handleDocumentCreated(path: string) {
-  layout.closeCreate()
-  emit('documentCreated', path)
 }
 </script>
 
@@ -64,21 +54,11 @@ function handleDocumentCreated(path: string) {
         </button>
         <RouterLink class="workspace-brand" to="/" aria-label="KnowledgeOS 작업공간">
           <span class="workspace-brand__mark" aria-hidden="true">K</span>
-          <span class="workspace-brand__name">KnowledgeOS</span>
+          <span>KnowledgeOS</span>
         </RouterLink>
       </div>
 
       <div class="workspace-topbar__actions">
-        <button
-          class="icon-button"
-          type="button"
-          aria-label="새 문서 패널 전환"
-          aria-controls="workspace-create"
-          :aria-expanded="layout.createVisible"
-          @click="toggleCreate"
-        >
-          <span aria-hidden="true">＋</span>
-        </button>
         <button
           class="icon-button"
           type="button"
@@ -133,7 +113,10 @@ function handleDocumentCreated(path: string) {
             <span aria-hidden="true">×</span>
           </button>
         </div>
-        <FileTreePanel @open-file="emit('openFile', $event)" />
+        <FileTreePanel
+          @document-created="emit('documentCreated', $event)"
+          @open-file="emit('openFile', $event)"
+        />
       </aside>
 
       <main class="editor-pane" aria-labelledby="editor-title">
@@ -192,21 +175,6 @@ function handleDocumentCreated(path: string) {
         class="workspace-overlay-panel"
         @close="layout.closeSearch"
         @open-file="openSearchResult"
-      />
-    </div>
-
-    <div v-if="layout.createVisible" class="workspace-overlay-layer">
-      <button
-        class="workspace-overlay-backdrop"
-        type="button"
-        aria-label="새 문서 패널 닫기"
-        @click="layout.closeCreate"
-      />
-      <CreateDocumentPanel
-        id="workspace-create"
-        class="workspace-overlay-panel workspace-overlay-panel--compact"
-        @close="layout.closeCreate"
-        @created="handleDocumentCreated"
       />
     </div>
 
@@ -424,10 +392,6 @@ function handleDocumentCreated(path: string) {
   box-shadow: var(--shadow-elevated);
 }
 
-.workspace-overlay-panel--compact {
-  width: min(30rem, calc(100vw - 2rem));
-}
-
 @media (max-width: 63.999rem) {
   .workspace-grid,
   .workspace-grid--without-navigation,
@@ -476,8 +440,7 @@ function handleDocumentCreated(path: string) {
     cursor: pointer;
   }
 
-  .workspace-overlay-panel,
-  .workspace-overlay-panel--compact {
+  .workspace-overlay-panel {
     top: 0;
     right: 0;
     bottom: 0;
@@ -489,12 +452,6 @@ function handleDocumentCreated(path: string) {
 
   .editor-pane {
     height: 100%;
-  }
-}
-
-@media (max-width: 40rem) {
-  .workspace-brand__name {
-    display: none;
   }
 }
 

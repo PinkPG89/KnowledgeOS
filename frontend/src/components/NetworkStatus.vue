@@ -15,7 +15,7 @@ const { isOnline, label } = storeToRefs(network)
     aria-live="polite"
   >
     <span class="network-status__dot" aria-hidden="true"></span>
-    <span class="network-status__label">{{ label }}</span>
+    <span>{{ label }}</span>
     <span class="network-status__detail">
       {{ isOnline ? '서버 연결 사용 가능' : 'App shell만 사용 가능' }}
     </span>
@@ -51,7 +51,6 @@ const { isOnline, label } = storeToRefs(network)
 }
 
 @media (max-width: 40rem) {
-  .network-status__label,
   .network-status__detail {
     display: none;
   }
