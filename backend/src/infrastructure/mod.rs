@@ -21,6 +21,9 @@ pub mod markdown;
 /// Markdown 원문을 검색용 파생 데이터로 변환하는 tolerant parser입니다.
 pub mod markdown_projection;
 
+/// Markdown 원본과 `SQLite` projection 사이의 incremental sync 및 reconciliation입니다.
+pub mod index_sync;
+
 /// 파일 시스템에 마크다운 문서를 배타적으로 생성하거나 원자적으로 수정 교체하는 작성기 모듈입니다.
 pub mod markdown_writer;
 

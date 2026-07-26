@@ -288,6 +288,18 @@
 
 - 범위: create/update/delete/move projection 갱신
 - 완료 기준: 원본과 index drift reconciliation test 통과
+- 진행 상태: incremental sync와 startup reconciliation 구현 및 자동화 검증 완료
+
+구현 결과:
+
+- Create/update 성공 snapshot을 application service에서 tolerant parser와 SQLite FTS
+  transaction으로 연결했다.
+- Delete와 move가 재사용할 수 있는 path projection transaction contract를 추가했다.
+- Startup마다 Vault source와 documents/FTS row를 비교해 insert, update와 stale delete를
+  조정한다.
+- `_trash/`, hidden path, symlink와 non-Markdown file은 검색에서 제외한다.
+- Index 장애는 구조화된 error로 기록하고 이미 성공한 Markdown 원본 쓰기를 rollback하지
+  않는다.
 
 ### C04 Search API
 

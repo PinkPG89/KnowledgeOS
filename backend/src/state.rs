@@ -1,6 +1,8 @@
 use crate::{
+    application::indexed_markdown_writer::IndexedMarkdownWriter,
     config::AppConfig,
     infrastructure::{
+        index_sync::SearchIndexSynchronizer,
         markdown::MarkdownReader,
         markdown_writer::MarkdownWriter,
         search_index::SearchIndex,
@@ -25,7 +27,7 @@ pub struct AppState {
     pub vault: VaultRoot,
     pub markdown_reader: MarkdownReader,
     /// 기존 파일을 덮어쓰지 않는 Markdown 생성 서비스
-    pub markdown_writer: MarkdownWriter,
+    pub markdown_writer: IndexedMarkdownWriter,
     /// 파일 내용을 읽지 않고 직계 자식 metadata만 조회하는 lazy tree 서비스
     pub tree_reader: TreeReader,
     /// 장애 시 Markdown CRUD와 분리되는 재생성 가능한 검색 projection
@@ -48,16 +50,42 @@ impl AppState {
         // VaultRoot를 개방하여 물리 경로를 획득하고 내부 검증을 진행합니다.
         let vault = VaultRoot::open(&config.knowledge_root)?;
         let markdown_reader = MarkdownReader::new(vault.clone(), config.max_markdown_bytes);
-        let markdown_writer = MarkdownWriter::new(vault.clone(), config.max_markdown_bytes);
+        let raw_markdown_writer = MarkdownWriter::new(vault.clone(), config.max_markdown_bytes);
         let tree_reader = TreeReader::new(vault.clone());
-        let search_index = match SearchIndex::open(&config.state_root) {
+        let (search_index, index_sync) = match SearchIndex::open(&config.state_root) {
             Ok(index) => {
                 tracing::info!(
                     state_root = %index.state_root().display(),
                     database_path = %index.database_path().display(),
                     "search index initialized"
                 );
-                Some(index)
+                let synchronizer = SearchIndexSynchronizer::new(
+                    vault.clone(),
+                    config.max_markdown_bytes,
+                    index.clone(),
+                );
+                match synchronizer.reconcile() {
+                    Ok(report) => {
+                        tracing::info!(
+                            discovered = report.discovered,
+                            skipped = report.skipped,
+                            malformed_frontmatter = report.malformed_frontmatter,
+                            inserted = report.changes.inserted,
+                            updated = report.changes.updated,
+                            unchanged = report.changes.unchanged,
+                            deleted = report.changes.deleted,
+                            "search index reconciled with active Vault"
+                        );
+                        (Some(index), Some(synchronizer))
+                    }
+                    Err(error) => {
+                        tracing::error!(
+                            %error,
+                            "search index reconciliation failed; continuing without search projection"
+                        );
+                        (None, None)
+                    }
+                }
             }
             Err(error) => {
                 tracing::error!(
@@ -65,9 +93,10 @@ impl AppState {
                     state_root = %config.state_root.display(),
                     "search index unavailable; continuing without search projection"
                 );
-                None
+                (None, None)
             }
         };
+        let markdown_writer = IndexedMarkdownWriter::new(raw_markdown_writer, index_sync);
 
         // 서버 기동 로그를 Tracing 시스템에 기록합니다.
         // `%` 접두사는 해당 인스턴스의 Display 포맷을 사용해 구조화된 로깅 필드로 치환 출력하라는 지시어입니다.
