@@ -15,11 +15,13 @@ use crate::state::AppState;
 pub mod error;
 pub mod files;
 pub mod health;
+pub mod search;
 pub mod tree;
 
 pub fn router() -> Router<AppState> {
     Router::new()
         .merge(health::router())
+        .merge(search::router())
         .merge(tree::router())
         .route("/files", post(files::create_file))
         .nest("/files", files::router())

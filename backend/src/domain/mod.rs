@@ -13,5 +13,8 @@ pub mod document;
 pub mod path;
 /// 검색 index에 저장할 Markdown 파생 데이터를 정의합니다.
 pub mod projection;
+
+/// 검색 query와 결과의 framework-independent domain contract입니다.
+pub mod search;
 // Lazy tree 조회에 사용하는 filesystem 독립 응답 모델입니다.
 pub mod tree;

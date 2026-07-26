@@ -305,6 +305,16 @@
 
 - 범위: query, path prefix, limit, snippet, score
 - 완료 기준: API contract와 escaping test 통과
+- 진행 상태: literal FTS search contract와 자동화 검증 완료
+
+구현 결과:
+
+- `GET /api/search`에 필수 query, optional canonical path prefix와 1–100 limit을 추가했다.
+- FTS operator를 quoted literal token으로 escape하고 모든 token을 `AND`로 결합한다.
+- BM25 title/tag/body weight, plain snippet과 stable path tie-break를 적용한다.
+- Invalid query, prefix와 limit을 공통 JSON error로 반환한다.
+- Index degraded와 SQLite query failure는 Markdown API와 분리된 `503 search_unavailable`로
+  반환한다.
 
 ### C05 Search UI
 
@@ -328,6 +338,34 @@
 
 - 범위: local draft, server content, base content 비교 UI
 - 완료 기준: overwrite 없이 사용자 선택으로만 해결
+
+## Track E: Optional ChatGPT Integration
+
+이 Track은 core filesystem, editor, search와 external change safety가 완료된 뒤 진행합니다.
+OpenAI 또는 ChatGPT 연동이 Markdown source of truth와 기본 파일 기능의 완료를 지연시키지
+않도록 MVP critical path에서 제외합니다.
+
+### E01 Conversation capture contract
+
+- 상태: Deferred
+- 범위: 사용자가 명시적으로 선택한 ChatGPT 대화를 구조화된 Markdown note로 저장
+- 기본 형식: summary, decisions, action items, open questions, 선택적 transcript excerpt
+- 완료 기준: 중복 요청 방지, size 제한, 인증과 provenance metadata test 통과
+- 비범위: 모든 ChatGPT 대화의 자동 수집, browser scraping, ChatGPT history 대체
+
+### E02 Remote AI read adapter
+
+- 상태: Deferred
+- 범위: `search`, `fetch`, directory allowlist와 read-only authentication
+- 후보: Custom GPT Action 또는 remote MCP gateway
+- 완료 기준: 외부 adapter 제거 후에도 Markdown workspace가 완전함
+
+### E03 Controlled remote write
+
+- 상태: Deferred
+- 범위: create/update action, 사용자 승인, `base_hash` conflict와 audit log
+- 선행 조건: A07–A09, D01–D03, authentication policy 완료
+- 완료 기준: 승인 없는 write와 stale overwrite가 불가능함
 
 ## Operations Gate
 

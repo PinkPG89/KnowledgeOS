@@ -10,7 +10,8 @@ use crate::{
     domain::path::PathError,
     infrastructure::{
         markdown::MarkdownReadError, markdown_writer::MarkdownUpdateError,
-        markdown_writer::MarkdownWriteError, tree::TreeReadError, vault::VaultError,
+        markdown_writer::MarkdownWriteError, search_index::SearchIndexError, tree::TreeReadError,
+        vault::VaultError,
     },
 };
 
@@ -258,6 +259,46 @@ impl ApiError {
     pub fn task_failure(error: &tokio::task::JoinError) -> Self {
         tracing::error!(%error, "blocking Markdown read task failed");
         Self::internal()
+    }
+
+    pub fn from_search(error: &SearchIndexError) -> Self {
+        tracing::error!(%error, "search index query failed");
+        Self::search_unavailable()
+    }
+
+    pub fn invalid_search_parameters(error: &axum::extract::rejection::QueryRejection) -> Self {
+        tracing::debug!(%error, "invalid search query parameters");
+        Self::invalid_search_query()
+    }
+
+    #[must_use]
+    pub fn invalid_search_query() -> Self {
+        Self::new(
+            StatusCode::BAD_REQUEST,
+            "invalid_search_query",
+            "Search query must contain between 1 and 512 UTF-8 bytes",
+            None,
+        )
+    }
+
+    #[must_use]
+    pub fn invalid_search_limit() -> Self {
+        Self::new(
+            StatusCode::BAD_REQUEST,
+            "invalid_search_limit",
+            "Search limit must be an integer between 1 and 100",
+            None,
+        )
+    }
+
+    #[must_use]
+    pub fn search_unavailable() -> Self {
+        Self::new(
+            StatusCode::SERVICE_UNAVAILABLE,
+            "search_unavailable",
+            "Search index is unavailable",
+            None,
+        )
     }
 
     /// 저장소 경계 관리(Vault) 에러를 수신하여 적절한 HTTP 코드로 분기합니다.

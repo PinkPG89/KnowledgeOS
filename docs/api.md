@@ -276,7 +276,7 @@ DELETE /api/files/{*path}
 
 ### Search
 
-상태: Planned
+상태: Implemented
 
 ```http
 GET /api/search?q=architecture
@@ -293,6 +293,7 @@ GET /api/search?q=architecture
 ```json
 {
   "query": "architecture",
+  "limit": 20,
   "results": [
     {
       "path": "projects/knowledgeos/architecture.md",
@@ -303,6 +304,10 @@ GET /api/search?q=architecture
   ]
 }
 ```
+
+`path_prefix`가 지정되면 응답에도 canonical prefix를 포함합니다. `limit` 기본값은 20이고
+1–100을 허용합니다. `score`는 값이 클수록 관련성이 높은 relative BM25 값이며 절대 범위는
+보장하지 않습니다. 검색어는 FTS operator가 아닌 literal token의 `AND` 조건으로 처리합니다.
 
 ### Reindex
 

@@ -101,6 +101,7 @@
 ## Phase 4: Optional Remote Access
 
 - 원격 AI용 제한 접근 adapter
+- 사용자가 명시적으로 선택한 ChatGPT 대화의 구조화된 Markdown capture
 - directory allowlist와 인증
 - 변경 audit log
 - 선택적 MCP gateway
@@ -109,5 +110,6 @@
 완료 기준:
 
 - local AI는 filesystem 직접 접근을 유지
+- 모든 ChatGPT 대화를 자동 수집하거나 ChatGPT history를 대체하지 않음
 - 원격 adapter를 제거해도 Markdown workspace가 완전함
 - MCP는 실제 client 요구가 확인된 경우에만 도입

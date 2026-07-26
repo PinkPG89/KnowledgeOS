@@ -11,7 +11,11 @@ use rusqlite::{Connection, OptionalExtension, Transaction};
 use thiserror::Error;
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 
-use crate::domain::{path::MarkdownPath, projection::MarkdownProjection};
+use crate::domain::{
+    path::{CanonicalPath, MarkdownPath, PathError},
+    projection::MarkdownProjection,
+    search::{SearchQuery, SearchResult},
+};
 
 const DATABASE_FILE_NAME: &str = "index.sqlite";
 const SCHEMA_VERSION: i32 = 1;
@@ -289,6 +293,21 @@ impl SearchIndex {
         Ok(result)
     }
 
+    /// 검증 완료된 literal token query로 FTS projection을 검색합니다.
+    ///
+    /// Title, tag, body 순으로 가중치를 적용하고 동일 rank에서는 canonical path로
+    /// 정렬합니다. 반환 score는 값이 클수록 관련성이 높습니다.
+    ///
+    /// # Errors
+    ///
+    /// Lifecycle lock, `SQLite` query 또는 indexed path 검증이 실패하면
+    /// [`SearchIndexError`]를 반환합니다.
+    pub fn search(&self, query: &SearchQuery) -> Result<Vec<SearchResult>, SearchIndexError> {
+        let _guard = self.lock_lifecycle()?;
+        let connection = self.open_connection()?;
+        search_documents(&connection, query, &self.database_path)
+    }
+
     fn initialize(&self) -> Result<(), SearchIndexError> {
         let _guard = self.lock_lifecycle()?;
         initialize_database(&self.database_path)
@@ -303,6 +322,84 @@ impl SearchIndex {
             .lock()
             .map_err(|_| SearchIndexError::LifecycleLockPoisoned)
     }
+}
+
+fn search_documents(
+    connection: &Connection,
+    query: &SearchQuery,
+    database_path: &Path,
+) -> Result<Vec<SearchResult>, SearchIndexError> {
+    let fts_query = literal_fts_query(&query.text);
+    let path_prefix = query.path_prefix.as_ref().map(CanonicalPath::as_str);
+    let mut statement = connection
+        .prepare(
+            "SELECT
+                d.path,
+                d.title,
+                snippet(search_documents, -1, '', '', ' … ', 24) AS snippet,
+                bm25(search_documents, 0.0, 5.0, 1.0, 2.0) AS rank
+             FROM search_documents
+             JOIN documents AS d ON d.path = search_documents.path
+             WHERE search_documents MATCH :query
+               AND (
+                    :path_prefix IS NULL
+                    OR d.path = :path_prefix
+                    OR substr(d.path, 1, length(:path_prefix) + 1) = :path_prefix || '/'
+               )
+             ORDER BY rank ASC, d.path ASC
+             LIMIT :limit",
+        )
+        .map_err(|source| SearchIndexError::Database {
+            path: database_path.to_path_buf(),
+            source,
+        })?;
+    let rows = statement
+        .query_map(
+            rusqlite::named_params! {
+                ":query": fts_query,
+                ":path_prefix": path_prefix,
+                ":limit": query.limit,
+            },
+            |row| {
+                Ok((
+                    row.get::<_, String>(0)?,
+                    row.get::<_, String>(1)?,
+                    row.get::<_, String>(2)?,
+                    row.get::<_, f64>(3)?,
+                ))
+            },
+        )
+        .map_err(|source| SearchIndexError::Database {
+            path: database_path.to_path_buf(),
+            source,
+        })?;
+    let mut results = Vec::new();
+    for row in rows {
+        let (path, title, snippet, rank) = row.map_err(|source| SearchIndexError::Database {
+            path: database_path.to_path_buf(),
+            source,
+        })?;
+        let markdown_path =
+            MarkdownPath::parse(&path).map_err(|source| SearchIndexError::InvalidIndexedPath {
+                path: path.clone(),
+                source,
+            })?;
+        results.push(SearchResult {
+            path: markdown_path,
+            title,
+            snippet,
+            score: -rank,
+        });
+    }
+    Ok(results)
+}
+
+fn literal_fts_query(input: &str) -> String {
+    input
+        .split_whitespace()
+        .map(|token| format!("\"{}\"", token.replace('"', "\"\"")))
+        .collect::<Vec<_>>()
+        .join(" AND ")
 }
 
 fn upsert_in_transaction(
@@ -778,4 +875,10 @@ pub enum SearchIndexError {
     DuplicateProjectionPath(String),
     #[error("search index timestamp formatting failed: {0}")]
     TimestampFormat(#[source] time::error::Format),
+    #[error("search index contains an invalid Markdown path {path}: {source}")]
+    InvalidIndexedPath {
+        path: String,
+        #[source]
+        source: PathError,
+    },
 }
