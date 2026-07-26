@@ -321,6 +321,15 @@
 - 범위: mobile search panel, result keyboard navigation, open result
 - 참고: Flatnotes search interaction
 - 완료 기준: empty/loading/error/result 상태 test 통과
+- 진행 상태: 반응형 search panel과 keyboard interaction 구현 및 자동화 검증 완료
+
+구현 결과:
+
+- topbar에서 검색 패널을 열고 모바일에서는 navigation/inspector drawer와 상호 배타적으로
+  동작한다.
+- 명시적 submit, request cancellation과 runtime response validation을 적용한다.
+- initial/loading/empty/error/result 상태를 분리하고 실패 시 재시도를 제공한다.
+- 결과는 Arrow/Home/End로 이동하고 Enter 또는 pointer로 Markdown 문서를 연다.
 
 ## Track D: External Change Safety
 

@@ -135,6 +135,53 @@ describe('open file flow', () => {
     expect(wrapper.get('.markdown-preview h1').text()).toBe('Note')
   })
 
+  it('opens a search result and closes the mobile search drawer', async () => {
+    const content = '# Search result\n'
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input)
+        if (url === '/api/tree') {
+          return jsonResponse({ path: '', entries: [] })
+        }
+        if (url.startsWith('/api/search?')) {
+          return jsonResponse({
+            query: 'result',
+            limit: 20,
+            results: [
+              {
+                path: 'notes/result.md',
+                title: 'Search result',
+                snippet: 'Matched body',
+                score: 1,
+              },
+            ],
+          })
+        }
+        return jsonResponse({
+          path: 'notes/result.md',
+          content,
+          hash,
+          size: new TextEncoder().encode(content).byteLength,
+          modified_at: modifiedAt,
+        })
+      }),
+    )
+    const { router, wrapper } = await mountAppAt('/', false)
+    await flushPromises()
+
+    await wrapper.get('[aria-label="문서 검색 패널 전환"]').trigger('click')
+    await wrapper.get('input[type="search"]').setValue('result')
+    await wrapper.get('[role="search"]').trigger('submit')
+    await flushPromises()
+    await wrapper.get('[role="option"]').trigger('click')
+    await flushPromises()
+
+    expect(router.currentRoute.value.params.path).toBe('notes/result.md')
+    expect(wrapper.find('#workspace-search').exists()).toBe(false)
+    expect(wrapper.get('.markdown-preview h1').text()).toBe('Search result')
+  })
+
   it('renders a retryable read error and clears the document on the root route', async () => {
     const content = 'Recovered'
     let documentAttempts = 0

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import NetworkStatus from '@/components/NetworkStatus.vue'
 import MarkdownDocumentPane from '@/components/editor/MarkdownDocumentPane.vue'
+import SearchPanel from '@/components/search/SearchPanel.vue'
 import FileTreePanel from '@/components/tree/FileTreePanel.vue'
 import { useResponsiveLayout } from '@/composables/useResponsiveLayout'
 import { useDocumentStore } from '@/stores/document'
@@ -18,8 +19,22 @@ function toggleInspector() {
   layout.toggleInspector(getBrowserStorage())
 }
 
+function toggleSearch() {
+  layout.toggleSearch()
+}
+
 function handleEscape(event: KeyboardEvent) {
-  if (event.key === 'Escape') layout.closeMobilePanel()
+  if (event.key !== 'Escape') return
+  if (layout.searchVisible) {
+    layout.closeSearch()
+  } else {
+    layout.closeMobilePanel()
+  }
+}
+
+function openSearchResult(path: string) {
+  layout.closeSearch()
+  emit('openFile', path)
 }
 </script>
 
@@ -44,6 +59,16 @@ function handleEscape(event: KeyboardEvent) {
       </div>
 
       <div class="workspace-topbar__actions">
+        <button
+          class="icon-button"
+          type="button"
+          aria-label="문서 검색 패널 전환"
+          aria-controls="workspace-search"
+          :aria-expanded="layout.searchVisible"
+          @click="toggleSearch"
+        >
+          <span aria-hidden="true">⌕</span>
+        </button>
         <NetworkStatus />
         <button
           class="icon-button"
@@ -133,6 +158,21 @@ function handleEscape(event: KeyboardEvent) {
           </div>
         </dl>
       </aside>
+    </div>
+
+    <div v-if="layout.searchVisible" class="workspace-search-layer">
+      <button
+        class="workspace-search-backdrop"
+        type="button"
+        aria-label="검색 패널 닫기"
+        @click="layout.closeSearch"
+      />
+      <SearchPanel
+        id="workspace-search"
+        class="workspace-search-panel"
+        @close="layout.closeSearch"
+        @open-file="openSearchResult"
+      />
     </div>
 
     <button
@@ -322,6 +362,33 @@ function handleEscape(event: KeyboardEvent) {
   display: none;
 }
 
+.workspace-search-layer {
+  position: fixed;
+  z-index: 60;
+  inset: 0;
+}
+
+.workspace-search-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  border: 0;
+  background: rgb(17 24 19 / 34%);
+  cursor: pointer;
+}
+
+.workspace-search-panel {
+  position: absolute;
+  top: 5rem;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: 1rem;
+  width: min(38rem, calc(100vw - 2rem));
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  box-shadow: var(--shadow-elevated);
+}
+
 @media (max-width: 63.999rem) {
   .workspace-grid,
   .workspace-grid--without-navigation,
@@ -368,6 +435,16 @@ function handleEscape(event: KeyboardEvent) {
     border: 0;
     background: rgb(17 24 19 / 46%);
     cursor: pointer;
+  }
+
+  .workspace-search-panel {
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(92vw, 25rem);
+    padding-top: env(safe-area-inset-top);
+    border: 0;
+    border-radius: 0;
   }
 
   .editor-pane {

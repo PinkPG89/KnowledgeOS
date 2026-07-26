@@ -58,7 +58,7 @@
 - Markdown editor
 - 파일 읽기/저장
 - 파일 생성/삭제/이름변경
-- 검색
+- [x] 검색 API와 반응형 검색 UI
 - Git 수동 version snapshot
 
 완료 기준:

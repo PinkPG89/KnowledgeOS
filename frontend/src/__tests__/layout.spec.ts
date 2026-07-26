@@ -39,10 +39,27 @@ describe('layout store', () => {
     store.toggleInspector(localStorage)
     expect(store.mobilePanel).toBe('inspector')
 
+    store.toggleSearch()
+    expect(store.mobilePanel).toBe('search')
+    expect(store.searchVisible).toBe(true)
+
     store.setViewportMode('desktop')
     expect(store.mobilePanel).toBeNull()
+    expect(store.searchVisible).toBe(false)
     expect(store.navigationVisible).toBe(true)
     expect(store.inspectorVisible).toBe(true)
+  })
+
+  it('opens transient desktop search without changing persisted panel preferences', () => {
+    const store = useLayoutStore()
+
+    store.toggleSearch()
+
+    expect(store.searchVisible).toBe(true)
+    expect(localStorage.getItem(LAYOUT_PREFERENCE_KEY)).toBeNull()
+
+    store.closeSearch()
+    expect(store.searchVisible).toBe(false)
   })
 
   it('ignores malformed stored preferences', () => {

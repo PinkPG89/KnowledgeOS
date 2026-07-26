@@ -56,4 +56,27 @@ describe('WorkspaceShell', () => {
     expect(wrapper.attributes('data-viewport')).toBe('desktop')
     expect(wrapper.find('.workspace-backdrop').exists()).toBe(false)
   })
+
+  it('opens desktop search and closes it with Escape', async () => {
+    const { wrapper } = mountShell(true)
+
+    await wrapper.get('[aria-label="문서 검색 패널 전환"]').trigger('click')
+    expect(wrapper.get('#workspace-search').isVisible()).toBe(true)
+    expect(wrapper.get('[aria-label="문서 검색 패널 전환"]').attributes('aria-expanded')).toBe(
+      'true',
+    )
+
+    await wrapper.trigger('keydown', { key: 'Escape' })
+    expect(wrapper.find('#workspace-search').exists()).toBe(false)
+  })
+
+  it('keeps mobile search mutually exclusive with navigation', async () => {
+    const { wrapper } = mountShell(false)
+
+    await wrapper.get('[aria-label="파일 탐색 패널 전환"]').trigger('click')
+    await wrapper.get('[aria-label="문서 검색 패널 전환"]').trigger('click')
+
+    expect(wrapper.get('#workspace-navigation').attributes('aria-hidden')).toBe('true')
+    expect(wrapper.get('#workspace-search').isVisible()).toBe(true)
+  })
 })

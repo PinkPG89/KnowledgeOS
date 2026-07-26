@@ -4,7 +4,7 @@ export const DESKTOP_LAYOUT_QUERY = '(min-width: 64rem)'
 export const LAYOUT_PREFERENCE_KEY = 'knowledgeos:layout:v1'
 
 export type ViewportMode = 'desktop' | 'mobile'
-export type MobilePanel = 'navigation' | 'inspector' | null
+export type MobilePanel = 'navigation' | 'search' | 'inspector' | null
 
 interface DesktopLayoutPreference {
   navigationOpen: boolean
@@ -15,6 +15,7 @@ interface LayoutState {
   viewportMode: ViewportMode
   desktopNavigationOpen: boolean
   desktopInspectorOpen: boolean
+  desktopSearchOpen: boolean
   mobilePanel: MobilePanel
 }
 
@@ -49,6 +50,7 @@ export const useLayoutStore = defineStore('layout', {
     viewportMode: 'desktop',
     desktopNavigationOpen: true,
     desktopInspectorOpen: true,
+    desktopSearchOpen: false,
     mobilePanel: null,
   }),
   getters: {
@@ -60,6 +62,8 @@ export const useLayoutStore = defineStore('layout', {
       state.viewportMode === 'desktop'
         ? state.desktopInspectorOpen
         : state.mobilePanel === 'inspector',
+    searchVisible: (state) =>
+      state.viewportMode === 'desktop' ? state.desktopSearchOpen : state.mobilePanel === 'search',
     hasMobileOverlay: (state) => state.viewportMode === 'mobile' && state.mobilePanel !== null,
   },
   actions: {
@@ -76,6 +80,7 @@ export const useLayoutStore = defineStore('layout', {
       this.viewportMode = mode
       // Mobile overlay 상태는 일시적인 UI 상태이므로 breakpoint를 넘을 때 폐기합니다.
       this.mobilePanel = null
+      this.desktopSearchOpen = false
     },
     toggleNavigation(storage: Storage | undefined) {
       if (this.viewportMode === 'mobile') {
@@ -94,6 +99,20 @@ export const useLayoutStore = defineStore('layout', {
 
       this.desktopInspectorOpen = !this.desktopInspectorOpen
       this.persistDesktopPreference(storage)
+    },
+    toggleSearch() {
+      if (this.viewportMode === 'mobile') {
+        this.mobilePanel = this.mobilePanel === 'search' ? null : 'search'
+        return
+      }
+
+      this.desktopSearchOpen = !this.desktopSearchOpen
+    },
+    closeSearch() {
+      if (this.viewportMode === 'mobile' && this.mobilePanel === 'search') {
+        this.mobilePanel = null
+      }
+      this.desktopSearchOpen = false
     },
     closeMobilePanel() {
       this.mobilePanel = null
