@@ -110,6 +110,54 @@ describe('HttpMarkdownClient', () => {
     expect(updated.content).toBe(content)
   })
 
+  it('creates a document with an exclusive Create API request', async () => {
+    const content = '# 새 문서\n'
+    const fetcher = vi.fn(async () =>
+      jsonResponse(
+        {
+          path: '프로젝트/새 문서.md',
+          content,
+          hash,
+          size: new TextEncoder().encode(content).byteLength,
+          modified_at: modifiedAt,
+        },
+        201,
+      ),
+    )
+    const client = new HttpMarkdownClient(fetcher)
+
+    const created = await client.createFile('프로젝트/새 문서.md', content)
+
+    expect(fetcher).toHaveBeenCalledWith(
+      '/api/files',
+      expect.objectContaining({
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ path: '프로젝트/새 문서.md', content }),
+      }),
+    )
+    expect(created).toMatchObject({ path: '프로젝트/새 문서.md', content })
+  })
+
+  it('requires a 201 response with the requested create snapshot', async () => {
+    const client = new HttpMarkdownClient(async () =>
+      jsonResponse({
+        path: 'other.md',
+        content: '',
+        hash,
+        size: 0,
+        modified_at: modifiedAt,
+      }),
+    )
+
+    await expect(client.createFile('note.md', '')).rejects.toMatchObject({
+      code: 'invalid_response',
+    })
+  })
+
   it('preserves the current hash from a write conflict', async () => {
     const currentHash = `sha256:${'c'.repeat(64)}`
     const client = new HttpMarkdownClient(async () =>

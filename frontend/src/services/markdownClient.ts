@@ -13,6 +13,10 @@ export interface MarkdownClient {
   ): Promise<MarkdownDocument>
 }
 
+export interface MarkdownCreateClient {
+  createFile(path: string, content: string, signal?: AbortSignal): Promise<MarkdownDocument>
+}
+
 export class MarkdownClientError extends Error {
   constructor(
     readonly code: string,
@@ -53,6 +57,38 @@ export class HttpMarkdownClient implements MarkdownClient {
     return parseMarkdownDocument(body, path)
   }
 
+  async createFile(path: string, content: string, signal?: AbortSignal): Promise<MarkdownDocument> {
+    if (!isMarkdownPath(path)) {
+      throw new MarkdownClientError('invalid_path', '올바른 Markdown 경로가 아닙니다.', 400)
+    }
+
+    let response: Response
+    try {
+      response = await this.fetcher('/api/files', {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ path, content }),
+        signal,
+      })
+    } catch (error) {
+      if (signal?.aborted || (error instanceof DOMException && error.name === 'AbortError')) {
+        throw new MarkdownClientError('request_aborted', 'Markdown 요청이 취소되었습니다.', null)
+      }
+      throw new MarkdownClientError('network_error', 'Markdown API에 연결할 수 없습니다.', null)
+    }
+
+    const body = await readJson(response)
+    if (!response.ok) throw parseApiError(response.status, body)
+    if (response.status !== 201) throw invalidResponse()
+
+    const document = parseMarkdownDocument(body, path)
+    if (document.content !== content) throw invalidResponse()
+    return document
+  }
+
   async updateFile(
     path: string,
     content: string,
@@ -90,7 +126,9 @@ export class HttpMarkdownClient implements MarkdownClient {
   }
 }
 
-export const markdownClient: MarkdownClient = new HttpMarkdownClient()
+const httpMarkdownClient = new HttpMarkdownClient()
+export const markdownClient: MarkdownClient = httpMarkdownClient
+export const markdownCreateClient: MarkdownCreateClient = httpMarkdownClient
 
 async function readJson(response: Response): Promise<unknown> {
   try {

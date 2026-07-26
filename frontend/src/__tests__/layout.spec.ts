@@ -43,6 +43,11 @@ describe('layout store', () => {
     expect(store.mobilePanel).toBe('search')
     expect(store.searchVisible).toBe(true)
 
+    store.toggleCreate()
+    expect(store.mobilePanel).toBe('create')
+    expect(store.createVisible).toBe(true)
+    expect(store.searchVisible).toBe(false)
+
     store.setViewportMode('desktop')
     expect(store.mobilePanel).toBeNull()
     expect(store.searchVisible).toBe(false)
@@ -60,6 +65,19 @@ describe('layout store', () => {
 
     store.closeSearch()
     expect(store.searchVisible).toBe(false)
+  })
+
+  it('keeps desktop create and search panels mutually exclusive', () => {
+    const store = useLayoutStore()
+
+    store.toggleSearch()
+    store.toggleCreate()
+
+    expect(store.searchVisible).toBe(false)
+    expect(store.createVisible).toBe(true)
+
+    store.closeTransientPanel()
+    expect(store.createVisible).toBe(false)
   })
 
   it('ignores malformed stored preferences', () => {

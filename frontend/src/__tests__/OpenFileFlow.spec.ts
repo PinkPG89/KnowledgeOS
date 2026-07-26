@@ -182,6 +182,60 @@ describe('open file flow', () => {
     expect(wrapper.get('.markdown-preview h1').text()).toBe('Search result')
   })
 
+  it('creates a document, refreshes its parent, and opens it', async () => {
+    const content = '# 새 문서\n'
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input)
+        if (url === '/api/tree') {
+          return jsonResponse({
+            path: '',
+            entries: [treeEntry('directory', 'notes', 'notes')],
+          })
+        }
+        if (url === '/api/tree?path=notes') {
+          return jsonResponse({
+            path: 'notes',
+            entries: [treeEntry('file', 'new.md', 'notes/new.md', content.length)],
+          })
+        }
+        if (url === '/api/files' && init?.method === 'POST') {
+          return jsonResponse(
+            {
+              path: 'notes/new.md',
+              content,
+              hash,
+              size: new TextEncoder().encode(content).byteLength,
+              modified_at: modifiedAt,
+            },
+            201,
+          )
+        }
+        return jsonResponse({
+          path: 'notes/new.md',
+          content,
+          hash,
+          size: new TextEncoder().encode(content).byteLength,
+          modified_at: modifiedAt,
+        })
+      }),
+    )
+    const { router, wrapper } = await mountAppAt('/', false)
+    await flushPromises()
+
+    await wrapper.get('[aria-label="새 문서 패널 전환"]').trigger('click')
+    await wrapper.get('input[name="path"]').setValue('notes/new.md')
+    await wrapper.get('input[name="title"]').setValue('새 문서')
+    await wrapper.get('#workspace-create form').trigger('submit')
+    await flushPromises()
+
+    expect(router.currentRoute.value.params.path).toBe('notes/new.md')
+    expect(wrapper.find('#workspace-create').exists()).toBe(false)
+    expect(wrapper.get('.markdown-preview h1').text()).toBe('새 문서')
+    expect(wrapper.get('[aria-selected="true"]').text()).toContain('new.md')
+  })
+
   it('renders a retryable read error and clears the document on the root route', async () => {
     const content = 'Recovered'
     let documentAttempts = 0

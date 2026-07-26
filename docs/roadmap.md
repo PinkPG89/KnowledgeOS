@@ -55,6 +55,7 @@
 - [x] 파일 트리 backend API
 - [x] 파일 트리 frontend UI
 - [x] Markdown 파일 deep link와 읽기
+- [x] 새 Markdown 문서 추가 UI
 - Markdown editor
 - 파일 읽기/저장
 - 파일 생성/삭제/이름변경

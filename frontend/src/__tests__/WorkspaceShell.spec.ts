@@ -79,4 +79,30 @@ describe('WorkspaceShell', () => {
     expect(wrapper.get('#workspace-navigation').attributes('aria-hidden')).toBe('true')
     expect(wrapper.get('#workspace-search').isVisible()).toBe(true)
   })
+
+  it('opens document create and replaces search on desktop', async () => {
+    const { wrapper } = mountShell(true)
+
+    await wrapper.get('[aria-label="문서 검색 패널 전환"]').trigger('click')
+    await wrapper.get('[aria-label="새 문서 패널 전환"]').trigger('click')
+
+    expect(wrapper.find('#workspace-search').exists()).toBe(false)
+    expect(wrapper.get('#workspace-create').isVisible()).toBe(true)
+    expect(wrapper.get('[aria-label="새 문서 패널 전환"]').attributes('aria-expanded')).toBe('true')
+
+    await wrapper.get('[aria-label="새 문서 패널 닫기"]').trigger('click')
+    expect(wrapper.find('#workspace-create').exists()).toBe(false)
+  })
+
+  it('keeps mobile create mutually exclusive with navigation', async () => {
+    const { wrapper } = mountShell(false)
+
+    await wrapper.get('[aria-label="파일 탐색 패널 전환"]').trigger('click')
+    await wrapper.get('[aria-label="새 문서 패널 전환"]').trigger('click')
+
+    expect(wrapper.get('#workspace-navigation').attributes('aria-hidden')).toBe('true')
+    expect(wrapper.get('#workspace-create').isVisible()).toBe(true)
+    expect(wrapper.find('.workspace-backdrop').exists()).toBe(false)
+    expect(wrapper.get('.workspace-overlay-backdrop').isVisible()).toBe(true)
+  })
 })

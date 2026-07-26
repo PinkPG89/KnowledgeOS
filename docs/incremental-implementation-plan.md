@@ -251,6 +251,20 @@
 - server save 성공 후 browser draft를 제거하고 저장 중 추가 입력은 새 base hash로 다시 기록한다.
 - storage read, write와 delete 실패가 server document load나 local draft를 제거하지 않도록 처리한다.
 
+### B09 Document create UI
+
+- 범위: responsive create panel, exclusive Create API 연결, tree refresh와 document open
+- 완료 기준: validation/creating/error/success와 open flow test 통과
+- 진행 상태: 구현 및 자동화 검증 완료
+
+구현 결과:
+
+- canonical lowercase `.md` relative path와 optional title을 입력받는다.
+- title은 초기 H1 content로 변환하고 빈 title은 빈 Markdown으로 생성한다.
+- A05 `POST /api/files`의 duplicate/missing parent 오류를 구조화된 상태로 표시한다.
+- 성공 후 parent directory를 force refresh하고 기존 route 기반 editor open flow를 재사용한다.
+- mobile create panel은 navigation/search/inspector와 상호 배타적으로 동작한다.
+
 ## Track C: Search Projection
 
 ### C01 Index schema and lifecycle

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import NetworkStatus from '@/components/NetworkStatus.vue'
+import CreateDocumentPanel from '@/components/create/CreateDocumentPanel.vue'
 import MarkdownDocumentPane from '@/components/editor/MarkdownDocumentPane.vue'
 import SearchPanel from '@/components/search/SearchPanel.vue'
 import FileTreePanel from '@/components/tree/FileTreePanel.vue'
@@ -9,7 +10,7 @@ import { getBrowserStorage } from '@/utils/browserStorage'
 
 const layout = useResponsiveLayout()
 const documentState = useDocumentStore()
-const emit = defineEmits<{ openFile: [path: string] }>()
+const emit = defineEmits<{ documentCreated: [path: string]; openFile: [path: string] }>()
 
 function toggleNavigation() {
   layout.toggleNavigation(getBrowserStorage())
@@ -23,10 +24,14 @@ function toggleSearch() {
   layout.toggleSearch()
 }
 
+function toggleCreate() {
+  layout.toggleCreate()
+}
+
 function handleEscape(event: KeyboardEvent) {
   if (event.key !== 'Escape') return
-  if (layout.searchVisible) {
-    layout.closeSearch()
+  if (layout.searchVisible || layout.createVisible) {
+    layout.closeTransientPanel()
   } else {
     layout.closeMobilePanel()
   }
@@ -35,6 +40,11 @@ function handleEscape(event: KeyboardEvent) {
 function openSearchResult(path: string) {
   layout.closeSearch()
   emit('openFile', path)
+}
+
+function handleDocumentCreated(path: string) {
+  layout.closeCreate()
+  emit('documentCreated', path)
 }
 </script>
 
@@ -54,11 +64,21 @@ function openSearchResult(path: string) {
         </button>
         <RouterLink class="workspace-brand" to="/" aria-label="KnowledgeOS 작업공간">
           <span class="workspace-brand__mark" aria-hidden="true">K</span>
-          <span>KnowledgeOS</span>
+          <span class="workspace-brand__name">KnowledgeOS</span>
         </RouterLink>
       </div>
 
       <div class="workspace-topbar__actions">
+        <button
+          class="icon-button"
+          type="button"
+          aria-label="새 문서 패널 전환"
+          aria-controls="workspace-create"
+          :aria-expanded="layout.createVisible"
+          @click="toggleCreate"
+        >
+          <span aria-hidden="true">＋</span>
+        </button>
         <button
           class="icon-button"
           type="button"
@@ -160,18 +180,33 @@ function openSearchResult(path: string) {
       </aside>
     </div>
 
-    <div v-if="layout.searchVisible" class="workspace-search-layer">
+    <div v-if="layout.searchVisible" class="workspace-overlay-layer">
       <button
-        class="workspace-search-backdrop"
+        class="workspace-overlay-backdrop"
         type="button"
         aria-label="검색 패널 닫기"
         @click="layout.closeSearch"
       />
       <SearchPanel
         id="workspace-search"
-        class="workspace-search-panel"
+        class="workspace-overlay-panel"
         @close="layout.closeSearch"
         @open-file="openSearchResult"
+      />
+    </div>
+
+    <div v-if="layout.createVisible" class="workspace-overlay-layer">
+      <button
+        class="workspace-overlay-backdrop"
+        type="button"
+        aria-label="새 문서 패널 닫기"
+        @click="layout.closeCreate"
+      />
+      <CreateDocumentPanel
+        id="workspace-create"
+        class="workspace-overlay-panel workspace-overlay-panel--compact"
+        @close="layout.closeCreate"
+        @created="handleDocumentCreated"
       />
     </div>
 
@@ -362,13 +397,13 @@ function openSearchResult(path: string) {
   display: none;
 }
 
-.workspace-search-layer {
+.workspace-overlay-layer {
   position: fixed;
   z-index: 60;
   inset: 0;
 }
 
-.workspace-search-backdrop {
+.workspace-overlay-backdrop {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -377,7 +412,7 @@ function openSearchResult(path: string) {
   cursor: pointer;
 }
 
-.workspace-search-panel {
+.workspace-overlay-panel {
   position: absolute;
   top: 5rem;
   right: max(1rem, env(safe-area-inset-right));
@@ -387,6 +422,10 @@ function openSearchResult(path: string) {
   border: 1px solid var(--color-border);
   border-radius: 1rem;
   box-shadow: var(--shadow-elevated);
+}
+
+.workspace-overlay-panel--compact {
+  width: min(30rem, calc(100vw - 2rem));
 }
 
 @media (max-width: 63.999rem) {
@@ -437,7 +476,8 @@ function openSearchResult(path: string) {
     cursor: pointer;
   }
 
-  .workspace-search-panel {
+  .workspace-overlay-panel,
+  .workspace-overlay-panel--compact {
     top: 0;
     right: 0;
     bottom: 0;
@@ -449,6 +489,12 @@ function openSearchResult(path: string) {
 
   .editor-pane {
     height: 100%;
+  }
+}
+
+@media (max-width: 40rem) {
+  .workspace-brand__name {
+    display: none;
   }
 }
 
