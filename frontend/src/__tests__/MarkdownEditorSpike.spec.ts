@@ -21,7 +21,7 @@ describe('MarkdownEditorSpike', () => {
     expect(wrapper.get('[role="textbox"]').attributes('aria-label')).toBe('첫 메모 편집기')
     expect(editorText(wrapper)).toContain('첫 메모')
     expect(editorText(wrapper)).toContain('한글 본문')
-    expect(wrapper.get('[role="toolbar"]').findAll('button')).toHaveLength(6)
+    expect(wrapper.get('[role="toolbar"]').findAll('button')).toHaveLength(13)
   })
 
   it('applies toolbar formatting and emits the complete draft', async () => {
@@ -34,6 +34,26 @@ describe('MarkdownEditorSpike', () => {
 
     expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual(['****본문'])
     expect(editorText(wrapper)).toBe('****본문')
+  })
+
+  it.each([
+    ['두 번째 수준 제목 추가', '## 본문'],
+    ['취소선', '~~~~본문'],
+    ['인라인 코드', '``본문'],
+    ['번호 목록 추가', '1. 본문'],
+    ['인용문 추가', '> 본문'],
+    ['코드 블록 추가', '```\n\n```본문'],
+    ['구분선 추가', '---\n본문'],
+  ])('%s toolbar command inserts Markdown syntax', async (ariaLabel, expected) => {
+    const wrapper = mount(MarkdownEditorSpike, {
+      props: { modelValue: '본문' },
+      attachTo: document.body,
+    })
+
+    await wrapper.get(`button[aria-label="${ariaLabel}"]`).trigger('click')
+
+    expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual([expected])
+    expect(editorText(wrapper)).toBe(expected.split('\n').join(''))
   })
 
   it('defers an external replacement until Korean composition ends', async () => {

@@ -126,6 +126,53 @@ function prefixCurrentLine(prefix: string) {
   editorView.focus()
 }
 
+function prefixSelectedLines(prefix: string | ((index: number) => string)) {
+  if (!editorView) return
+
+  const selection = editorView.state.selection.main
+  const endPosition =
+    selection.to > selection.from && editorView.state.doc.lineAt(selection.to).from === selection.to
+      ? selection.to - 1
+      : selection.to
+  const firstLine = editorView.state.doc.lineAt(selection.from)
+  const lastLine = editorView.state.doc.lineAt(endPosition)
+  const source = editorView.state.sliceDoc(firstLine.from, lastLine.to)
+  const lines = source.split('\n')
+  const prefixes = lines.map((_, index) => (typeof prefix === 'string' ? prefix : prefix(index)))
+  const insertedText = lines.map((line, index) => `${prefixes[index]}${line}`).join('\n')
+  const leadingPrefixLength = prefixes[0]?.length ?? 0
+  const totalPrefixLength = prefixes.reduce((total, value) => total + value.length, 0)
+
+  editorView.dispatch({
+    changes: { from: firstLine.from, to: lastLine.to, insert: insertedText },
+    selection: selection.empty
+      ? { anchor: selection.head + leadingPrefixLength }
+      : {
+          anchor: selection.from + leadingPrefixLength,
+          head: selection.to + totalPrefixLength,
+        },
+  })
+  editorView.focus()
+}
+
+function insertCodeBlock() {
+  wrapSelection('```\n', '\n```')
+}
+
+function insertHorizontalRule() {
+  if (!editorView) return
+
+  const selection = editorView.state.selection.main
+  const line = editorView.state.doc.lineAt(selection.head)
+  const insert = line.length === 0 ? '---' : '---\n'
+
+  editorView.dispatch({
+    changes: { from: line.from, insert },
+    selection: { anchor: line.from + insert.length },
+  })
+  editorView.focus()
+}
+
 function focusEditorAfterPointer(event: PointerEvent) {
   event.preventDefault()
   void nextTick(() => editorView?.focus())
@@ -146,6 +193,16 @@ function focusEditorAfterPointer(event: PointerEvent) {
       </button>
       <button
         type="button"
+        aria-label="두 번째 수준 제목 추가"
+        title="제목 2"
+        @pointerdown="focusEditorAfterPointer"
+        @click="prefixCurrentLine('## ')"
+      >
+        H2
+      </button>
+      <span class="markdown-editor__separator" aria-hidden="true" />
+      <button
+        type="button"
         aria-label="굵게"
         title="굵게"
         @pointerdown="focusEditorAfterPointer"
@@ -164,22 +221,60 @@ function focusEditorAfterPointer(event: PointerEvent) {
       </button>
       <button
         type="button"
+        aria-label="취소선"
+        title="취소선"
+        @pointerdown="focusEditorAfterPointer"
+        @click="wrapSelection('~~')"
+      >
+        <s>S</s>
+      </button>
+      <button
+        type="button"
+        aria-label="인라인 코드"
+        title="인라인 코드"
+        @pointerdown="focusEditorAfterPointer"
+        @click="wrapSelection('`')"
+      >
+        <code>&lt;/&gt;</code>
+      </button>
+      <span class="markdown-editor__separator" aria-hidden="true" />
+      <button
+        type="button"
         aria-label="목록 추가"
         title="목록"
         @pointerdown="focusEditorAfterPointer"
-        @click="prefixCurrentLine('- ')"
+        @click="prefixSelectedLines('- ')"
       >
         •
+      </button>
+      <button
+        type="button"
+        aria-label="번호 목록 추가"
+        title="번호 목록"
+        @pointerdown="focusEditorAfterPointer"
+        @click="prefixSelectedLines((index) => `${index + 1}. `)"
+      >
+        1.
       </button>
       <button
         type="button"
         aria-label="할 일 추가"
         title="할 일"
         @pointerdown="focusEditorAfterPointer"
-        @click="prefixCurrentLine('- [ ] ')"
+        @click="prefixSelectedLines('- [ ] ')"
       >
         ☑
       </button>
+      <button
+        type="button"
+        aria-label="인용문 추가"
+        title="인용문"
+        @pointerdown="focusEditorAfterPointer"
+        @click="prefixSelectedLines('> ')"
+      >
+        ❯
+      </button>
+      <span class="markdown-editor__separator" aria-hidden="true" />
       <button
         type="button"
         aria-label="링크 추가"
@@ -188,6 +283,24 @@ function focusEditorAfterPointer(event: PointerEvent) {
         @click="wrapSelection('[', ']()')"
       >
         ↗
+      </button>
+      <button
+        type="button"
+        aria-label="코드 블록 추가"
+        title="코드 블록"
+        @pointerdown="focusEditorAfterPointer"
+        @click="insertCodeBlock"
+      >
+        { }
+      </button>
+      <button
+        type="button"
+        aria-label="구분선 추가"
+        title="구분선"
+        @pointerdown="focusEditorAfterPointer"
+        @click="insertHorizontalRule"
+      >
+        ―
       </button>
     </div>
     <div ref="editorHost" class="markdown-editor__surface" />
@@ -233,6 +346,24 @@ function focusEditorAfterPointer(event: PointerEvent) {
 .markdown-editor__toolbar button:hover {
   border-color: var(--color-border);
   background: var(--color-surface-muted);
+}
+
+.markdown-editor__toolbar button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-accent) 40%, transparent);
+  outline-offset: -3px;
+}
+
+.markdown-editor__toolbar code {
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.markdown-editor__separator {
+  flex: 0 0 1px;
+  align-self: stretch;
+  margin: 0.35rem 0.15rem;
+  background: var(--color-border);
 }
 
 .markdown-editor__surface :deep(.cm-editor) {

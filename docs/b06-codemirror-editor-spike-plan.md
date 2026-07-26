@@ -52,7 +52,8 @@ B06의 최종 완료 기준에는 iPhone Safari와 Android Chrome 실기기 검�
 
 - Markdown syntax language support
 - line wrapping과 accessible textbox label
-- heading, bold, italic, list, task와 link toolbar prototype
+- H1/H2, bold, italic, strikethrough, inline/fenced code, bullet/ordered/task list,
+  blockquote, link와 horizontal rule toolbar
 - IME composition 상태 표시
 - composition 중 external replacement 지연
 - large document viewport rendering 자동화 검증
@@ -74,6 +75,7 @@ B06의 최종 완료 기준에는 iPhone Safari와 Android Chrome 실기기 검�
 - 한글 Markdown 초기 rendering
 - 접근 가능한 textbox와 toolbar label
 - toolbar transaction과 전체 draft emit
+- 확장 toolbar 13개 명령의 Markdown syntax 삽입
 - composition 중 external replacement 지연
 - 500 KiB 이상, 30,000 line 문서의 viewport rendering
 - preview rendering, draft 반영과 mode 전환
