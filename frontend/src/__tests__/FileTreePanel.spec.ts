@@ -253,12 +253,16 @@ describe('FileTreePanel', () => {
   })
 
   it('keeps tree rows and actions at the 44px touch target contract', () => {
-    const source = readFileSync(
-      resolve(process.cwd(), 'src/components/tree/FileTreePanel.vue'),
+    const rowSource = readFileSync(
+      resolve(process.cwd(), 'src/components/tree/TreeItemRow.vue'),
+      'utf8',
+    )
+    const toolbarSource = readFileSync(
+      resolve(process.cwd(), 'src/components/tree/FileTreeToolbar.vue'),
       'utf8',
     )
 
-    expect(source).toMatch(/\.tree-item \{[\s\S]*?min-height: 2\.75rem;/)
-    expect(source).toMatch(/\.file-tree__toolbar button,[\s\S]*?min-height: 2\.75rem;/)
+    expect(rowSource).toMatch(/\.tree-item \{[\s\S]*?min-height: 2\.75rem;/)
+    expect(toolbarSource).toMatch(/\.file-tree__toolbar button \{[\s\S]*?min-height: 2\.75rem;/)
   })
 })

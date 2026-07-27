@@ -265,6 +265,13 @@
 - 성공 후 parent directory를 force refresh하고 기존 route 기반 editor open flow를 재사용한다.
 - Escape/cancel, keyboard focus와 mobile tree drawer 동작을 지원한다.
 
+### Stabilization checkpoint
+
+- 범위: tree view projection/action context, document navigation workflow, tree 표시 component 분리
+- 완료 기준: 사용자 동작과 API contract 변경 없이 전체 frontend 검증 통과
+- 진행 상태: 리팩터링 및 자동화 검증 완료
+- 상세 계획: [Stabilization Refactor Plan](stabilization-refactor-plan.md)
+
 ## Track C: Search Projection
 
 ### C01 Index schema and lifecycle

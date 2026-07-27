@@ -1,18 +1,16 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
-import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute, useRouter } from 'vue-router'
+import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute } from 'vue-router'
 
 import WorkspaceShell from '@/components/workspace/WorkspaceShell.vue'
+import { useWorkspaceDocumentNavigation } from '@/composables/useWorkspaceDocumentNavigation'
 import { useDocumentStore } from '@/stores/document'
-import { useLayoutStore } from '@/stores/layout'
 import { useTreeStore } from '@/stores/tree'
-import { directParentPath } from '@/utils/canonicalPath'
 
 const route = useRoute()
-const router = useRouter()
 const documentState = useDocumentStore()
-const layout = useLayoutStore()
 const tree = useTreeStore()
+const { openCreatedDocument, openDocument } = useWorkspaceDocumentNavigation()
 
 const routePath = computed(() => {
   const path = route.params.path
@@ -48,18 +46,8 @@ watch(
   },
   { immediate: true },
 )
-
-async function openFile(path: string) {
-  await router.push({ name: 'file', params: { path } })
-  if (layout.viewportMode === 'mobile') layout.closeMobilePanel()
-}
-
-async function openCreatedDocument(path: string) {
-  await tree.refreshDirectory(directParentPath(path))
-  await openFile(path)
-}
 </script>
 
 <template>
-  <WorkspaceShell @document-created="openCreatedDocument" @open-file="openFile" />
+  <WorkspaceShell @document-created="openCreatedDocument" @open-file="openDocument" />
 </template>
